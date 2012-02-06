@@ -20,7 +20,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   
   // If the payment method specifies full IPN logging, do it now.
   if ($payment_method && !empty($payment_method['settings']['payment_response_logging']) &&
-    $payment_method['settings']['payment_response_logging'] == 'full_wpr'
+    $payment_method['settings']['payment_response_logging'] == 'full_wppr'
  ) {
     $full_log = TRUE;
   }
@@ -45,11 +45,11 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       return;
     }
     
-    if (empty($wppr['M_orderId'])) {
+    if (empty($wppr['MC_orderId'])) {
       drupal_add_http_header('Status', '404 Not Found');
       if ($full_log)
         watchdog(
-          'commerce_worldpay_bg', 'Request with no M_orderId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.', 
+          'commerce_worldpay_bg', 'Request with no MC_orderId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.', 
           array(
             '@ip' => !empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0',
             '@method' => !empty($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
@@ -82,7 +82,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
 //     }
 //   }
   
-  if (!$order = commerce_order_load($wppr['M_orderId'])) {
+  if (!$order = commerce_order_load($wppr['MC_orderId'])) {
     drupal_add_http_header('Status', '404 Not Found');
     return;
   }
@@ -104,7 +104,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   
   $theme_data = array(
     'order' => $order,
-    'order_id' => $wppr['M_orderId'],
+    'order_id' => $wppr['MC_orderId'],
     'order_no' => $wppr['cartId'],
   );
   $theme_data['installation_id'] = $payment_method ? $payment_method['settings']['installation_id'] : $wppr['instId'];
@@ -186,21 +186,23 @@ function _commerce_worldpay_bg_build_page($theme_data, $type = 'success') {
 }
 
 function _commerce_worldpay_bg_payment_response_authenticate(
-  &$wppr, &$payment_method = NULL, &$wp_transaction = NULL
+  $order_wrapper, &$wppr, &$payment_method = NULL, &$wp_transaction = NULL
 ) {
   $failed_authenticaion = FALSE;
   $message = '';
+  $settings = $payment_method['settings'];
   
   //If the merchant set a password compare them callbackPW
-  if ($form['payment_parameters']['use_password'] && !empty($form['payment_parameters']['password'])) {
-    if ($form['payment_parameters']['password'] != $wppr['callbackPW']) {
+  if ($settings['payment_parameters']['use_password'] && !empty($settings['payment_parameters']['password'])) {
+    if ($settings['payment_parameters']['password'] != $wppr['callbackPW']) {
       $failed_authenticaion = TRUE;
       $message = 'WorldPay passwords do not match. Make sure you have the same password set in the Commerce WorldPay settings page as set in your WorldPay installtion.';
     }
   }
   
   // Check the md5
-  // TODO
+  $response_url = commerce_worldpay_bg_response_url($settings['payment_method']);
+  $salt = $settings['payment_security']['md5_salt'];
   
   if ($wp_transaction) {
     $local_md5 = $wp_transaction['md5'];
@@ -210,23 +212,25 @@ function _commerce_worldpay_bg_payment_response_authenticate(
       $order_wrapper->commerce_order_total->amount->value(),
       $order_wrapper->commerce_order_total->currency_code->value()
     ));
-    $local_md5 = commerce_worldpay_bg_build_md5(_commerce_worldpay_build_sig_array(
-      $order_wrapper,
-      $wp_trans_id,
-      $response_url));
+    $local_md5 = commerce_worldpay_bg_build_md5(
+      _commerce_worldpay_build_sig_array(
+        $order_wrapper,
+        $settings['installation_id'],
+        $response_url),
+      $salt);
   }
   
-  // Current fields are: instId, amount, currency, cartId, M_orderId, WORLDPAY_RESPONSE_URL_TOKEN
+  // Current fields are: instId, amount, currency, cartId, MC_orderId, WORLDPAY_RESPONSE_URL_TOKEN
   $wp_sig_fields = array(
-    $wppr['transId'],
+    $wppr['instId'],
     $wppr['amount'],
     $wppr['currency'],
     $wppr['cartId'],
-    $wppr['M_orderId'],
+    $wppr['MC_orderId'],
     $wppr[WORLDPAY_RESPONSE_URL_TOKEN],
   );
   
-  if ($local_md5 == commerce_worldpay_bg_build_md5($wp_sig_fields)) {
+  if ($local_md5 == commerce_worldpay_bg_build_md5($wp_sig_fields, $salt)) {
     $failed_authenticaion = TRUE;
     $message = 'The md5 strings did not match.';
   }

@@ -12,7 +12,7 @@ define('WORLDPAY_TXN_MODE_TEST', 'live_test');
 //define('WORLDPAY_TXN_MODE_SIMULATION', 'developer');
 
 define('WORLDPAY_DEF_SERVER_LIVE', 'https://secure.wp3.rbsworldpay.com/wcc/purchase');
-define('WORLDPAY_DEF_SERVER_TEST', 'https://select-test.wp3.rbsworldpay.com/wcc/purchase');
+define('WORLDPAY_DEF_SERVER_TEST', 'https://secure-test.worldpay.com/wcc/purchase');
 //define('WORLDPAY_SERVER_SIMULATION', 'https://test.sagepay.com/Simulator/VSPFormGateway.asp');
 
 // This is WorldPay custom variable name, used to hold the repsone URL
@@ -34,7 +34,7 @@ function _commerce_worldpay_bg_md5_signature_fields() {
     'amount',
     'currency',
     'cartId',
-    'M_orderId',
+    'MC_orderId',
     WORLDPAY_RESPONSE_URL_TOKEN,
   );
 }
@@ -99,7 +99,7 @@ function commerce_worldpay_bg_commerce_payment_method_info() {
     'description' => t('Integration with Worldpay\'s Business Gateway method.'),
     'active' => TRUE,
     'offsite' => TRUE,
-    'offsite_autoredirect' => TRUE,
+    'offsite_autoredirect' => FALSE,
     'callbacks' => array()
   );
 
@@ -414,13 +414,13 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $country = $countries[$address['country']];
   
   // TODO Look into producing a formater for addressfield
-  $address_post = (isset($address['thoroughfare']) ? $address['thoroughfare'] . "\n" : '') .
-    (isset($address['premise']) ? $address['premise'] . "\n" : '') .
-    (isset($address['sub_premise']) ? $address['sub_premise'] . "\n" : '') .
-    (isset($address['locality']) ? $address['locality'] . "\n" : '') .
-    (isset($address['dependent_locality']) ? $address['dependent_locality'] . "\n" : '') .
-    (isset($address['sub_administrative_area']) ? $address['sub_administrative_area'] . "\n" : '') .
-    (isset($address['administrative_area']) ? $address['administrative_area'] . "\n" : '');
+  $address_post = (!empty($address['thoroughfare']) ? $address['thoroughfare'] . "\n" : '') .
+    (!empty($address['premise']) ? $address['premise'] . "\n" : '') .
+    (!empty($address['sub_premise']) ? $address['sub_premise'] . "\n" : '') .
+    (!empty($address['locality']) ? $address['locality'] . "\n" : '') .
+    (!empty($address['dependent_locality']) ? $address['dependent_locality'] . "\n" : '') .
+    (!empty($address['sub_administrative_area']) ? $address['sub_administrative_area'] . "\n" : '') .
+    (!empty($address['administrative_area']) ? $address['administrative_area'] . "\n" : '');
   
   // Build the data array that will be translated into hidden form values.
   $data = array();
@@ -439,7 +439,11 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
       $worldpay_name = substr($address['organisation_name'], 0, 128);
     }
   }
-
+  
+  $response_url = commerce_worldpay_bg_response_url($settings['payment_method']);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $salt = $settings['payment_security']['md5_salt'];
+  
   $data += array(
     'instId' => $settings['installation_id'],
     'amount' => round(commerce_currency_amount_to_decimal($amount, $currency_code), 2),
@@ -452,13 +456,19 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     'email' => $order->mail,
     // TODO make it possible to a field to be used for the telephone data
     //'tel' => $profile->field_telephone,
-    'M_orderId' => $order->order_id,
+    'MC_orderId' => $order->order_id,
     'lang' => $settings['payment_parameters']['lang'],
     'M_http_host' => $_SERVER['HTTP_HOST'],
     // @see http://www.worldpay.com/support/kb/bg/htmlredirect/rhtml.html
     'signatureFields' => join(':', _commerce_worldpay_bg_md5_signature_fields()),
+    'signature' => commerce_worldpay_bg_build_md5(
+      _commerce_worldpay_build_sig_array(
+        $order_wrapper,
+        $settings['installation_id'],
+        $response_url),
+      $salt),
     // The path WorldPay should send its Payment Response to
-    'MC_callback' => commerce_worldpay_bg_response_url($settings['payment_method']),
+    'MC_callback' => $response_url,
   );
   
   // TODO
@@ -516,6 +526,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Proceed to WorldPay to make your payment'),
+    '#name' => 'wp-sub',
   );
   
   // Check
@@ -552,7 +563,10 @@ function commerce_worldpay_bg_redirect_form($form, &$form_state, $order, $paymen
     return array();
   }
   
-  $settings = array();
+  $settings = array(
+    // Specify the current payment method instance ID in the MC_callback URL
+    'payment_method' => $payment_method['instance_id'],
+  );
   /*
   $settings = array(
     // Return to the previous page when payment is canceled
@@ -560,9 +574,6 @@ function commerce_worldpay_bg_redirect_form($form, &$form_state, $order, $paymen
 
     // Return to the payment redirect page for processing successful payments
     'return' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-
-    // Specify the current payment method instance ID in the notify_url
-    'payment_method' => $payment_method['instance_id'],
   );
   */
   
@@ -590,34 +601,6 @@ function commerce_worldpay_bg_redirect_form_validate($order, $payment_method) {
   if (!empty($_POST['transStatus']) && $_POST['transStatus'] == 'C') {
     return FALSE;
   }
-}
-
-/** 
- * Create a transaction and associate it with an order
- */
-function commerce_worldpay_bg_transaction($payment_method, $order, $charge = array('amount' => 0, 'currency_code' => ''), $tokens, $transaction_status) {
-  
-  $transaction = commerce_payment_transaction_new('commerce_sagepay', $order->order_id);
-  $transaction->instance_id = $payment_method['instance_id'];
-  $transaction->amount = $charge['amount'];
-  $transaction->currency_code = $charge['currency_code'];
-  
-  // set a status for the payment - one of COMMERCE_PAYMENT_STATUS_SUCCESS, COMMERCE_PAYMENT_STATUS_PENDING or COMMERCE_PAYMENT_STATUS_FAILURE
-  $transaction->status = $transaction_status;
-  $transaction->message = 'Status @status, @statusdetail. VPSTxId=@vpstxid. Auth Code=@authcode. Address Check: @address. Postcode Check: @postcode. AVSCV2 Result: @avs. 3D Secure: @tds';
-  $transaction->message_variables = 
-    array(
-      '@status' => $tokens['Status'], 
-      '@statusdetail' => $tokens['StatusDetail'], 
-      '@vpstxid' => $tokens['VPSTxId'], 
-      '@authcode' => $tokens['TxAuthNo'], 
-      '@address' => $tokens['AddressResult'], 
-      '@postcode' => $tokens['PostCodeResult'], 
-      '@avs' => $tokens['AVSCV2'], 
-      '@tds' => $tokens['3DSecureStatus'], 
-    );
-  commerce_payment_transaction_save($transaction);
-
 }
 
 /**
@@ -674,21 +657,20 @@ function _commerce_worldpay_bg_validate_password($element, &$form_state, $form) 
 /**
  * Creates the encrypted md5 string
  */
-function _commerce_worldpay_bg_create_md5($salt) {
-  // Concanate instId:amount:currency:cartId
-  // $settings['md5_salt']
-  md5($salt . ':' . join(':', _commerce_worldpay_bg_md5_signature_fields()));
+function commerce_worldpay_bg_build_md5($wp_sig_fields, $salt) {
+  if ($GLOBALS['user']->uid == 1) debug($wp_sig_fields,'md5+'.$salt);
+  return md5($salt . ':' . join(':', $wp_sig_fields));
 }
 
-function _commerce_worldpay_build_sig_array($order_wrapper, $wp_trans_id, $response_url) {
-  // Current fields are: instId, amount, currency, cartId, M_orderId, WORLDPAY_RESPONSE_URL_TOKEN
+function _commerce_worldpay_build_sig_array($order_wrapper, $installation_id, $response_url) {
+  // Current fields are: instId, amount, currency, cartId, MC_orderId, WORLDPAY_RESPONSE_URL_TOKEN
   $currency = $order_wrapper->commerce_order_total->currency_code->value();
   $amount = round(commerce_currency_amount_to_decimal(
     $order_wrapper->commerce_order_total->amount->value(),
     $currency
   ));
   return array(
-    $wp_trans_id,
+    $installation_id,
     $amount,
     $currency,
     $order_wrapper->order_number->value(),
