@@ -112,8 +112,13 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
     'order' => $order,
     'order_id' => $wppr['MC_orderId'],
     'order_no' => $wppr['cartId'],
+    'wp_txn_id' => $wppr['transId'],
+    'settings' => $payment_method['settings'],
   );
   $theme_data['installation_id'] = $payment_method ? $payment_method['settings']['installation_id'] : $wppr['instId'];
+  // Remove parts of the settings a theme need not know about
+  unset($theme_data['payment_security']);
+  $theme_data['settings']['theme_debug'] = $debug_mode;
   
   switch ($wppr['transStatus']) {
     case 'Y':
@@ -193,9 +198,9 @@ function _commerce_worldpay_bg_build_page($theme_data, $type = 'success') {
           'commerce_worldpay_bg_html',
           array(
             'page' => theme('commerce_worldpay_bg_page', array(
-                theme('commerce_worldpay_bg_' . $type, $theme_data)
-             )+array($theme_data)),
-          )+array($theme_data)
+                'content' => theme('commerce_worldpay_bg_' . $type, $theme_data)
+             )+$theme_data),
+          )+$theme_data
          );
 }
 
@@ -207,13 +212,14 @@ function _commerce_worldpay_bg_payment_response_authenticate(
   $settings = $payment_method['settings'];
   
   //If the merchant set a password compare them callbackPW
-  if ($settings['payment_parameters']['use_password'] && !empty($settings['payment_parameters']['password'])) {
-    if ($settings['payment_parameters']['password'] != $wppr['callbackPW']) {
+  if ($settings['payment_security']['use_password'] && !empty($settings['payment_security']['password'])) {
+    if ($settings['payment_security']['password'] != $wppr['callbackPW']) {
       $failed_authenticaion = TRUE;
       $message = 'WorldPay passwords do not match. Make sure you have the same password set in the Commerce WorldPay settings page as set in your WorldPay installtion.';
     }
   }
   
+  /*
   // Check the md5
   $response_url = commerce_worldpay_bg_response_url($settings['payment_method']);
   $salt = $settings['payment_security']['md5_salt'];
@@ -244,10 +250,11 @@ function _commerce_worldpay_bg_payment_response_authenticate(
     $wppr[WORLDPAY_RESPONSE_URL_TOKEN],
   );
   
-  if ($local_md5 == commerce_worldpay_bg_build_md5($wp_sig_fields, $salt)) {
+  if ($local_md5 != commerce_worldpay_bg_build_md5($wp_sig_fields, $salt)) {
     $failed_authenticaion = TRUE;
     $message = 'The md5 strings did not match.';
   }
+  */
   
   // TODO - Is it worth checking the User agent is the one WorldPay uses which is:
   // User-Agent: WJHRO/1.0 (WorldPay Java HTTP Request Object)
@@ -267,7 +274,7 @@ function _commerce_worldpay_bg_payment_response_authenticate(
 }
 
 /**
- * Payment method callback: process an IPN once it's been validated.
+ * Process the WPPR once it's been validated.
  */
 function commerce_paypal_bg_transaction_process($order, $payment_method, &$wppr, &$prior_wppr = NULL) {
   // Exit when we don't get a payment status we recognize.
@@ -284,7 +291,7 @@ function commerce_paypal_bg_transaction_process($order, $payment_method, &$wppr,
   }
   else {
     // Create a new payment transaction for the order.
-    $transaction = commerce_payment_transaction_new('worldpay_bg', $order->order_id);
+    $transaction = commerce_payment_transaction_new('commerce_worldpay_bg', $order->order_id);
     $transaction->instance_id = $payment_method['instance_id'];
   }
 
@@ -297,29 +304,32 @@ function commerce_paypal_bg_transaction_process($order, $payment_method, &$wppr,
   $transaction->remote_status = $wppr['transStatus'];
 
   // TODO - Figure out how best to  set status based on SecureCode authentication.
-  switch ($wppr['authentication']) {
-    case 'ARespH.card.authentication.0':
-      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-      $transaction->message = t("Cardholder authenticated by SecureCode.");
-      break;
+  if (isset($wppr['authentication'])) {
+    switch ($wppr['authentication']) {
+      case 'ARespH.card.authentication.0':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        $transaction->message = t("Cardholder authenticated by SecureCode.");
+        break;
 
-    case 'ARespH.card.authentication.1':
-      $transaction->message = t('Cardholder/Issuing Bank not enrolled for authentication.');
-      break;
+      case 'ARespH.card.authentication.1':
+        $transaction->message = t('Cardholder/Issuing Bank not enrolled for authentication.');
+        break;
 
-    case 'ARespH.card.authentication.6':
-      $transaction->message = t('Cardholder authentication not available');
-      break;
+      case 'ARespH.card.authentication.6':
+        $transaction->message = t('Cardholder authentication not available');
+        break;
 
-    case 'ARespH.card.authentication.7':
-      $transaction->message = t('Cardholder did not complete authentication.');
-      break;
+      case 'ARespH.card.authentication.7':
+        $transaction->message = t('Cardholder did not complete authentication.');
+        break;
+    }
   }
   
   // They don't give us very detailed transaction information do they?
   switch ($wppr['transStatus']) {
     case 'Y':
       $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      $transaction->message = t('WorldPay excepted the user\'s transaction.');
       break;
    
    // I don't think we should ever see this status at this point but incase

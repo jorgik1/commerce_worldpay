@@ -620,17 +620,6 @@ function commerce_worldpay_bg_redirect_form($form, &$form_state, $order, $paymen
     // Specify the current payment method instance ID in the MC_callback URL
     'payment_method' => $payment_method['instance_id'],
   );
-  /*
-  $settings = array(
-    // Return to the previous page when payment is canceled
-    'cancel_return' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-
-    // Return to the payment redirect page for processing successful payments
-    'return' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-  );
-  */
-  
-  drupal_set_message('commerce_worldpay_bg_redirect_form fired ' . date('H:i'));
   
   return commerce_worldpay_bg_order_form($form, $form_state, $order, $payment_method['settings'] + $settings);
   
@@ -700,7 +689,7 @@ function commerce_worldpay_bg_response_url($method_id = NULL, $https = FALSE) {
     $parts[] = $method_id;
   }
 
-  return url(implode('/', $parts), array('absolute' => TRUE));
+  return url(implode('/', $parts), array('absolute' => TRUE, 'https' => $https));
 }
 
 /**
@@ -727,15 +716,16 @@ function commerce_worldpay_bg_build_md5($wp_sig_fields, $salt) {
 
 function _commerce_worldpay_build_sig_array($order_wrapper, $installation_id, $response_url) {
   // Current fields are: instId, amount, currency, cartId, MC_orderId, WORLDPAY_RESPONSE_URL_TOKEN
-  $currency = $order_wrapper->commerce_order_total->currency_code->value();
-  $amount = round(commerce_currency_amount_to_decimal(
-    $order_wrapper->commerce_order_total->amount->value(),
-    $currency
-  ));
+  $currency_code = $order_wrapper->commerce_order_total->currency_code->value();
+  $amount = round(
+    commerce_currency_amount_to_decimal(
+      $order_wrapper->commerce_order_total->amount->value(),
+      $currency_code),
+    2);
   return array(
     $installation_id,
     $amount,
-    $currency,
+    $currency_code,
     $order_wrapper->order_number->value(),
     $order_wrapper->order_id->value(),
     $response_url
@@ -821,7 +811,6 @@ function commerce_worldpay_bg_convert_wppr_to_record($wppr) {
     'wp_txn_id' => (int) $wppr['transId'],
     'authmode' => $wppr['authMode'],
     'transaction_status' => $wppr['transStatus'],
-    'transaction_status' => $wppr['transStatus'],
     'name' => $wppr['name'],
     'shoppers_email' => $wppr['email'],
     'company_name' => isset($wppr['companyName']) ? $wppr['companyName'] : '',
@@ -830,11 +819,12 @@ function commerce_worldpay_bg_convert_wppr_to_record($wppr) {
     'auth_amount' => $wppr['authAmount'],
     'auth_currency' => $wppr['authCurrency'],
     'raw_auth_message' => $wppr['rawAuthMessage'],
-    'waf_merch_message' => $wppr['wafMerchMessage'],
+    'waf_merch_message' => isset($wppr['wafMerchMessage']) ? $wppr['wafMerchMessage'] : '',
     'avs' => $wppr['AVS'],
-    'authentication' => $wppr['authentication'],
-    'ipaddress' => $wppr['ipAddress'],
+    'authentication' => isset($wppr['authentication']) ? $wppr['authentication'] : '',
+    'ip_address' => $wppr['ipAddress'],
     'transaction_time' => (int) $wppr['transTime'],
+    'test_mode' => isset($wppr['testMode']) && $wppr['testMode'] > 0 ? 1 : 0,
   );
 }
 
