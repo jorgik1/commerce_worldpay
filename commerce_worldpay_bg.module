@@ -450,15 +450,6 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $countries = country_get_list();
   $country = $countries[$address['country']];
   
-  // TODO Look into producing a formater for addressfield
-  $address_post = (!empty($address['thoroughfare']) ? $address['thoroughfare'] . "\n" : '') .
-    (!empty($address['premise']) ? $address['premise'] . "\n" : '') .
-    (!empty($address['sub_premise']) ? $address['sub_premise'] . "\n" : '') .
-    (!empty($address['locality']) ? $address['locality'] . "\n" : '') .
-    (!empty($address['dependent_locality']) ? $address['dependent_locality'] . "\n" : '') .
-    (!empty($address['sub_administrative_area']) ? $address['sub_administrative_area'] . "\n" : '') .
-    (!empty($address['administrative_area']) ? $address['administrative_area'] . "\n" : '');
-  
   // Build the data array that will be translated into hidden form values.
   $data = array();
   if ($settings['payment_parameters']['test_mode']) {
@@ -477,7 +468,22 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     }
   }
   
-  $response_url = commerce_worldpay_bg_response_url($settings['payment_method']);
+  // TODO Look into producing a formater for addressfield
+  $address_post = (!empty($address['thoroughfare']) ? $address['thoroughfare'] . "\n" : '') .
+    (!empty($address['premise']) ? $address['premise'] . "\n" : '') .
+    (!empty($address['sub_premise']) ? $address['sub_premise'] . "\n" : '') .
+    (!empty($address['locality']) ? $address['locality'] . "\n" : '') .
+    (!empty($address['dependent_locality']) ? $address['dependent_locality'] . "\n" : '') .
+    (!empty($address['sub_administrative_area']) ? $address['sub_administrative_area'] . "\n" : '') .
+    (!empty($address['administrative_area']) ? $address['administrative_area'] . "\n" : '');
+  
+  // Seperate post fields.
+  if (!empty($address['thoroughfare'])) $data['address1'] = $address['thoroughfare'];
+  if (!empty($address['premise'])) $data['address2'] = $address['premise'];
+  if (!empty($address['locality'])) $data['town'] = $address['locality'];
+  if (!empty($address['administrative_area'])) $data['region'] = $address['administrative_area'];
+  if (!empty($address['country'])) $data['country'] = $address['country'];
+  
   $response_url = commerce_worldpay_bg_response_url($settings['payment_method'], $settings['payment_urls']['use_ssl']);
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $salt = $settings['payment_security']['md5_salt'];
@@ -490,7 +496,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     'name' => $worldpay_name,
     'address' => $address_post,
     'postcode' => $address['postal_code'],
-    'country' => $country,
+    'countryString' => $country,
     'email' => $order->mail,
     // TODO make it possible to a field to be used for the telephone data
     //'tel' => $profile->field_telephone,
