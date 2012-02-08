@@ -36,6 +36,7 @@ TODO
 ----
 * Set appropriate Commerce Transaction status for SecureCode ('authentication')
 * Set appropriate Commerce Transaction status for AVS ('AVS')
+* Finish Bartik Worldpay theme (images etc).
  
 SUPPORT
 -------

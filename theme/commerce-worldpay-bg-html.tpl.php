@@ -43,11 +43,17 @@
  * @see template_preprocess_commerce_worldpay_bg_html()
  */
 ?><!DOCTYPE html>
-<WPDISPLAY ITEM=banner>
 <html lang="<?php print $language->language; ?>" version="HTML+RDFa 1.0" dir="<?php print $language->dir; ?>"<?php print $rdf_namespaces; ?>>
-
 <head profile="<?php print $grddl_profile; ?>">
   <title><?php print $head_title; ?></title>
+  <!-- Embed the stylesheet stored on WorldPay's server -->
+  <style type="text/css">
+  <?php if ($settings['theme_debug']): //Allows simulating a bit of WorldPay's behavior ?>
+  <?php include drupal_get_path('module', 'commerce_worldpay_bg') . '/worldpay page example/stylesheet.css'; ?>
+  <?php else: ?>
+  <WPDISPLAY FILE=stylesheet.css>
+  <?php endif; ?>
+  </style>
 </head>
 <body>
   <?php print $page; ?>

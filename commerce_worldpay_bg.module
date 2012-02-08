@@ -513,6 +513,8 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
       $salt),
     // The path WorldPay should send its Payment Response to
     'MC_callback' => $response_url,
+    // Used in WorldPay custom pages
+    'C_siteTitle' => variable_get('site_name', 'Drupal Commerce'),
   );
   
   // TODO

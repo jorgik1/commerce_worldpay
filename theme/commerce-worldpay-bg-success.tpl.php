@@ -35,18 +35,50 @@
 ?>
 <header>
   <h1><?php print $title; ?></h1>
-  <p>Payment was successful.</p>
-  <table>
+  <p>Your transaction was successfuly recieved by WorldPay. Thank you.</p>
+  <table class="bartik">
     <thead>
       <tr>
         <th>Order No</th>
+        <th>WorldPay transaction code</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td><?php print $order_no; ?></td>
+        <td><?php print $wp_txn_id; ?></td>
       </tr>
     </tbody>
   </table>
-  <p><a href="<?php print $return_url; ?>">Finish your order</a></p>
+  <?php if (!$settings['theme_debug']): ?>
+  <WPDISPLAY ITEM=banner>
+  <?php else: ?>
+  <table border="0" cellpadding="0" cellspacing="0" class="bannercontainer">
+  <tbody>
+  <tr>
+    <td>
+      <table cellpadding="2" cellspacing="0" class="banner">
+        <tbody>
+          <tr valign="top">
+            <td class="bannererror">
+              <span style=" font-family: ; font-size: ;">This was NOT a live transaction - no money has changed hands</span></td>
+            </tr>
+            <tr valign="top">
+              <td class="banner">
+                <span style=" font-family: ; font-size: ; color: ;">Thank you, your payment was successful</span><br>
+                <span style=" font-family: ; font-size: ; color: ;">Merchant's Reference:&nbsp;</span>
+                <span style=" font-family: ;"><b>5</b></span><br>
+                <span style=" font-family: ; font-size: ; color: ;">WorldPay Transaction ID:&nbsp;</span>
+                <span style=" font-family: ;"><b>128246379</b></span><br>
+              </td>
+            </tr>
+        </tbody>
+      </table>
+    </td>
+    </tr>
+  </tbody>
+  </table>
+  <?php endif; ?>
+  
+  <p id="return-url"><a href="<?php print $return_url; ?>">Finish your order</a></p>
 </header>

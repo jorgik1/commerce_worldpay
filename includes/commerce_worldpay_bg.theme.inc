@@ -16,13 +16,19 @@ function template_preprocess_commerce_worldpay_bg_html(&$variables) {
   $variables['grddl_profile']     = 'http://www.w3.org/1999/xhtml/vocab';
   $variables['language']          = $GLOBALS['language'];
   $variables['language']->dir     = $GLOBALS['language']->direction ? 'rtl' : 'ltr';
-  
+
   if (drupal_get_title()) {
     $variables['head_title'] = strip_tags(drupal_get_title());
   } 
   else {
     $variables['head_title'] = check_plain(variable_get('site_name', 'Drupal Commerce')) . ' WorldPay payment';
   }
+  
+  $variables['title'] = variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment';
+}
+
+function template_preprocess_commerce_worldpay_bg_page(&$variables) {
+  $variables['title'] = variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment';
 }
 
 function template_preprocess_commerce_worldpay_bg_success(&$variables) {

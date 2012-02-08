@@ -26,12 +26,21 @@
  * - $order_id: The current Commerec order's ID
  * - $order_no: The current Commerec order's number
  * - $content: The rendered content of the page
+ * - $title:
+ * - $site_url: URL of the web site
  *
  * @see template_preprocess_commerce_worldpay_bg_htmll()
  */
 ?>
 <div id="page-wrapper">
   <div id="page">
-    <?php print $content; ?>
+    <div id="header"><div class="section">
+      <div id="site-name">
+         <strong><span><?php print $title; ?></span></strong>
+      </div>
+    </div></div>
+    <div id="main">
+      <?php print $content; ?>
+    </div>
   </div>
 </div>

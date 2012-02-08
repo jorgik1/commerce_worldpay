@@ -35,7 +35,7 @@
 ?>
 <header>
   <h1><?php print $title; ?></h1>
-  <p>Payment was successful.</p>
+  <p>Payment was cancelled. No funds have been transferred.</p>
   <table>
     <thead>
       <tr>
