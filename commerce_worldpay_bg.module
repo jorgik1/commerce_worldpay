@@ -70,20 +70,24 @@ function commerce_worldpay_bg_menu() {
 function commerce_worldpay_bg_theme() {
   return array(
     'commerce_worldpay_bg_html' => array(
-      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL, 'page' => NULL),
+      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL, 'wp_txn_id' => NULL, 'settings' => NULL, 'page' => NULL),
       'template' => 'theme/commerce-worldpay-bg-html',
+      'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
     'commerce_worldpay_bg_page' => array(
-      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL, 'content' => NULL),
+      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL, 'wp_txn_id' => NULL, 'settings' => NULL, 'content' => NULL),
       'template' => 'theme/commerce-worldpay-bg-page',
+      'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
     'commerce_worldpay_bg_success' => array(
-      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL),
+      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL, 'wp_txn_id' => NULL, 'settings' => NULL),
       'template' => 'theme/commerce-worldpay-bg-success',
+      'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
     'commerce_worldpay_bg_cancel' => array(
-      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL),
+      'variables' => array('installation_id' => NULL, 'order' => NULL, 'order_id' => NULL, 'order_no' => NULL, 'wp_txn_id' => NULL, 'settings' => NULL),
       'template' => 'theme/commerce-worldpay-bg-cancel',
+      'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
   );
 }
@@ -139,6 +143,8 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     'payment_urls' => array(
       'live' => WORLDPAY_DEF_SERVER_LIVE,
       'test' => WORLDPAY_DEF_SERVER_TEST,
+      'use_ssl' => FALSE,
+      'force_non_ssl_links' => FALSE,
     ),
   );
   
@@ -333,6 +339,20 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     '#required' => TRUE,
   );
   
+  $form['payment_urls']['use_ssl'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use SSL for payment notifications'),
+    '#description' => t('If checked, when WorldPay passes information, it will be done over SSL for greater security. Use in combination with callback password to prevent spoofing.'),
+    '#default_value' => $settings['payment_urls']['use_ssl'],
+  );
+  
+  $form['payment_urls']['force_non_ssl_links'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Force http (non-ssl) return links'),
+    '#description' => t('This is needed if "Use SSL" is checked and you want your buyers to return to the non-ssl site.'),
+    '#default_value' => $settings['payment_urls']['force_non_ssl_links'],
+  );
+  
   // ======
   /*
   $form['txn_mode'] = array(
@@ -441,6 +461,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   }
   
   $response_url = commerce_worldpay_bg_response_url($settings['payment_method']);
+  $response_url = commerce_worldpay_bg_response_url($settings['payment_method'], $settings['payment_urls']['use_ssl']);
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $salt = $settings['payment_security']['md5_salt'];
   
@@ -624,8 +645,19 @@ function commerce_worldpay_bg_valid_url($element, &$form_state, $form) {
  *
  * @param $method_id
  *   Optionally specify a payment method ID to include in the URL.
+ * @param $https
+ *   Return the URL using SSL protocal (https://)
+ *
+ * @return
+ *   The absolute path to the callback page
  */
-function commerce_worldpay_bg_response_url($method_id = NULL) {
+function commerce_worldpay_bg_response_url($method_id = NULL, $https = FALSE) {
+  if ($https) {
+    // URL wil fail if https is not of type BOOL
+    $https = TRUE;
+  } else {
+    $https = FALSE;
+  }
   $parts = array(
     'commerce_worldpay',
     'bg',

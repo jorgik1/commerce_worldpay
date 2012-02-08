@@ -30,7 +30,12 @@ function template_preprocess_commerce_worldpay_bg_success(&$variables) {
   $variables['title'] = t('Payment has been completed');
   $variables['site_name'] = variable_get('site_name', 'Drupal');
   
-  $variables['return_url'] = url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE));
+  $url_options = array();
+  if ($variables['settings']['payment_urls']['force_non_ssl_links']) $url_options['https'] = FALSE;
+  
+  $variables['return_url'] = url(
+    'checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'],
+    array('absolute' => TRUE)+$url_options);
 }
 
 function template_preprocess_commerce_worldpay_bg_cancel(&$variables) {
@@ -38,6 +43,10 @@ function template_preprocess_commerce_worldpay_bg_cancel(&$variables) {
   $variables['title'] = t('The transaction has been canceled');
   $variables['site_name'] = variable_get('site_name', 'Drupal');
   
+  $url_options = array();
+  if ($variables['settings']['payment_urls']['force_non_ssl_links']) $url_options['https'] = FALSE;
   // Return to the previous page when payment is canceled
-  $variables['return_url'] = url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE));
+  $variables['return_url'] = url(
+    'checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'],
+    array('absolute' => TRUE)+$url_options);
 }
