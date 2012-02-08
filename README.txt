@@ -7,6 +7,7 @@ CONTENTS OF THIS FILE
  * Alternatives
  * Support
  * Sponsorship
+ * Acknowledgements/Credits
 
 
 INTRODUCTION
@@ -30,7 +31,7 @@ INSTALLATION
 KNOWN ISSUES
 ------------
 
- * None so far
+ * None so far. I'm sure they'll pop-up soon ;)
 
 TODO
 ----
@@ -49,3 +50,15 @@ SPONSORSHIP
 -----------
 
 This module was originaly developed for Zixiao (http://www.zixiao.co.uk).
+
+ACKNOWLEDGEMENTS/CREDITS
+------------------------
+
+Much of the code here got a running start thanks to the Commerce PayPal and Sage
+payment modules so thank you to the authors ikos and rszrama. Also thanks to the
+Ubercart uc_worldpay author Hans Idink and psynaptic as that module also gave me
+a running start on working with WorldPay's API.
+
+AUTHORS
+-------
+Adam Lyall aka MagicMyth <magicmyth@magicmyth.com>
