@@ -155,8 +155,8 @@ function commerce_worldpay_bg_schema() {
         'default' => '',
       ),
       // The IP address WorldPay thinks the payment came from
-      'authentication' => array(
-        'description' => 'IP address of user accessign WorldPay.',
+      'ip_address' => array(
+        'description' => 'IP address of user accessing WorldPay.',
         'type' => 'varchar',
         'length' => 30,
         'not null' => TRUE,
