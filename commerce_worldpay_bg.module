@@ -54,11 +54,28 @@ function commerce_worldpay_bg_menu() {
 
   $items['commerce_worldpay/bg/response/%commerce_payment_method_instance'] = array(
     'title' => 'Worldpay response page',
-    'page call    back' => 'commerce_worldpay_bg_response_page',
+    'page callback' => 'commerce_worldpay_bg_response_page',
     'page arguments' => array(3),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
     'file' => 'includes/commerce_worldpay_bg.page.inc',
+  );
+  
+  // Debuging pages
+  $items['commerce_worldpay/bg/response/debug_me'] = array(
+    'title' => 'Worldpay response page',
+    'page callback' => 'commerce_worldpay_bg_debug_response_page',
+    'access arguments' => array('administer payment methods'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/commerce_worldpay_bg.debug_page.inc',
+  );
+  $items['commerce_worldpay/bg/response/%commerce_payment_method_instance/debug_me'] = array(
+    'title' => 'Worldpay response page',
+    'page callback' => 'commerce_worldpay_bg_debug_response_page',
+    'page arguments' => array(3),
+    'access arguments' => array('administer payment methods'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/commerce_worldpay_bg.debug_page.inc',
   );
   
   return $items;
@@ -550,9 +567,18 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     '#name' => 'wp-sub',
   );
   
-  // Check
-  
-  debug($data);
+  if ($settings['debug'] != 'none') {
+    if ($settings['debug'] == 'screen' || $settings['debug'] == 'both')
+      debug($data, 'Post data');
+    if ($settings['debug'] == 'log' || $settings['debug'] == 'both')
+        watchdog(
+          'commerce_worldpay_bg', "Data to be posted for order !order_id:\n <pre>!log</pre>.", 
+          array(
+            '!order_id' => $order->order_id,
+            '!log' => print_r($data, TRUE)
+          ),
+          WATCHDOG_NOTICE);
+  }
 
   return $form;
 }
@@ -690,7 +716,6 @@ function _commerce_worldpay_bg_validate_password($element, &$form_state, $form) 
  * Creates the encrypted md5 string
  */
 function commerce_worldpay_bg_build_md5($wp_sig_fields, $salt) {
-  if ($GLOBALS['user']->uid == 1) debug($wp_sig_fields,'md5+'.$salt);
   return md5($salt . ':' . join(':', $wp_sig_fields));
 }
 

@@ -29,10 +29,11 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   }
   
   if (empty($debug_wppr)) {
+    $debug_mode = FALSE;
     // WorldPay Payment Response
     $wppr = $_POST;
     
-    if (empty($wppr['transId'])) {
+    if (empty($wppr['transId']) && $wppr['transStatus'] != 'C') {
       if ($full_log)
         watchdog(
           'commerce_worldpay_bg', 'Request with no transId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.', 
@@ -62,6 +63,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   }
   else {
     $wppr = $debug_wppr;
+    $debug_mode = TRUE;
   }
   
   if ($full_log) {
@@ -91,15 +93,19 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   
   // Check that the the transId and cartId are part of the same transaction
   // TODO
-  
-  $authenticated = _commerce_worldpay_bg_payment_response_authenticate(
-    $order_wrapper,
-    $wppr,
-    $payment_method,
-    $prior_wppr);
-  
-  if (!$authenticated) {
-    return;
+  if ($debug_mode && $debug_wppr['skip_auth']) {
+    $order->data['payment_redirect_key'] = '123';
+  }
+  else {
+    $authenticated = _commerce_worldpay_bg_payment_response_authenticate(
+      $order_wrapper,
+      $wppr,
+      $payment_method,
+      $prior_wppr);
+    
+    if (!$authenticated) {
+      return;
+    }
   }
   
   $theme_data = array(
@@ -111,15 +117,23 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   
   switch ($wppr['transStatus']) {
     case 'Y':
-      // Create or re-establish a Commerce Transaction
-      // This will add the 'transaction_id' to $wppr
-      commerce_paypal_bg_transaction_process($order, $payment_method, $wppr, $prior_wppr);
-      $tx_data = commerce_worldpay_bg_convert_wppr_to_record($wppr);
-      $tx_data['transaction_id'] = $wppr['transaction_id'];
-      if ($prior_wppr) {
-        $tx_data = array_replace($prior_wppr, $tx_data);
+      if ($debug_mode && $debug_wppr['skip_save']) {
+        $order->data['payment_redirect_key'] = '123';
+        // Write a message
       }
-      commerce_worldpay_bg_txn_save($tx_data);
+      else {
+        // Create or re-establish a Commerce Transaction
+        // This will add the 'transaction_id' to $wppr
+        commerce_paypal_bg_transaction_process($order, $payment_method, $wppr, $prior_wppr);
+        $tx_data = commerce_worldpay_bg_convert_wppr_to_record($wppr);
+        $tx_data['transaction_id'] = $wppr['transaction_id'];
+        $tx_data['order_id'] = $order->order_id;
+        $tx_data['signature_fields'] = join(':', _commerce_worldpay_bg_md5_signature_fields());
+        if ($prior_wppr) {
+          $tx_data = array_replace($prior_wppr, $tx_data);
+        }
+        commerce_worldpay_bg_txn_save($tx_data);
+      }
       
       if (!empty($payment_method) and !empty($payment_method['settings']['debug'])) {
         watchdog(
