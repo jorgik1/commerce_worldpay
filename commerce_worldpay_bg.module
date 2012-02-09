@@ -120,7 +120,7 @@ function commerce_worldpay_bg_commerce_payment_method_info() {
     'description' => t('Integration with Worldpay\'s Business Gateway method.'),
     'active' => TRUE,
     'offsite' => TRUE,
-    'offsite_autoredirect' => FALSE,
+    'offsite_autoredirect' => TRUE,
     'callbacks' => array()
   );
 
@@ -616,6 +616,11 @@ function commerce_worldpay_bg_redirect_form($form, &$form_state, $order, $paymen
   if (empty($payment_method['settings']['payment_security']['md5_salt'])) {
     drupal_set_message(t('WorldPay Business Gateway Integration is not configured for use. Encryption salt key has not been specified.'), 'error');
     return array();
+  }
+  
+  // Disable redirect if debugging - This is a bit of a HACK so probably should go at some point.
+  if ($payment_method['settings']['debug'] == 'screen' || $payment_method['settings']['debug'] == 'both' ) {
+    drupal_add_js(';(function($) {Drupal.behaviors.commercePayment = {attach: function (context, settings) {}}})(jQuery);', array('type' => 'inline', 'weight' => 5));
   }
   
   $settings = array(
