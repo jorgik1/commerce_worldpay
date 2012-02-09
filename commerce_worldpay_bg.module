@@ -488,7 +488,12 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $salt = $settings['payment_security']['md5_salt'];
   
-  $data += array(
+  // Invoke the extra post field hook. We do this first so that we can overwrite
+  // fields that should not be set by this hook
+  $extra_data = module_invoke_all('commerce_worldpay_bg_post_data', $order, $profile, $settings);
+  if (!is_array($extra_data)) $extra_data = array();
+  
+  $data += array_replace($extra_data, array(
     'instId' => $settings['installation_id'],
     'amount' => round(commerce_currency_amount_to_decimal($amount, $currency_code), 2),
     'cartId' => $order->order_number,
@@ -515,7 +520,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     'MC_callback' => $response_url,
     // Used in WorldPay custom pages
     'C_siteTitle' => variable_get('site_name', 'Drupal Commerce'),
-  );
+  ));
   
   // TODO
   // Implement suppot for authValidFrom and authValidTo in order to prevent
