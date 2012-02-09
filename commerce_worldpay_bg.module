@@ -551,13 +551,13 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   
   if (!$settings['payment_parameters']['edit_contact']) {
     $data += array(
-      'fixContact' => '',
+      'fixContact' => 'true',
     );
   }
   
   if (!$settings['payment_parameters']['show_contact']) {
     $data += array(
-      'hideContact' => '',
+      'hideContact' => 'true',
     );
   }
   
