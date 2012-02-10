@@ -119,9 +119,12 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   // Remove parts of the settings a theme need not know about
   unset($theme_data['payment_security']);
   $theme_data['settings']['theme_debug'] = $debug_mode;
+  // Allow themes to adjust based on current context
+  $theme_data['settings']['context'] = 'general';
   
   switch ($wppr['transStatus']) {
     case 'Y':
+      $theme_data['settings']['context'] = 'result_success';
       if ($debug_mode && $debug_wppr['skip_save']) {
         $order->data['payment_redirect_key'] = '123';
         // Write a message
@@ -160,7 +163,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       break;
     
     case 'C':
-      
+      $theme_data['settings']['context'] = 'result_cancel';
       if ($prior_wppr) {
         // Don't know if WorldPay ever changes transStatus after its been set
         // the first time but of it does we update our transaction info
