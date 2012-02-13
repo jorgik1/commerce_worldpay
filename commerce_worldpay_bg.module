@@ -526,33 +526,44 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   // Implement suppot for authValidFrom and authValidTo in order to prevent
   // purchases on limited time offers
   
+  // Get the product line item count and build cart description
+  $order_post = '';
+  $order_lines = $order->commerce_line_items[LANGUAGE_NONE];
+  $total_lines = count($order_lines);
+  $prod_count = 0;
+  
+  for ($line = 0; $line < $total_lines; $line++) {
+    $line_item = commerce_line_item_load($order_lines[$line]['line_item_id']);
+    $description = $line_item->line_item_label;
+    $quantity = $line_item->quantity;
+    //$item_total = $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'] / 100;
+    $item_total = commerce_currency_format(
+      $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'],
+      $line_item->commerce_unit_price[LANGUAGE_NONE][0]['currency_code']);
+    $line_total = commerce_currency_format(
+      $line_item->commerce_total[LANGUAGE_NONE][0]['amount'],
+      $line_item->commerce_total[LANGUAGE_NONE][0]['currency_code']);
+    
+    $order_post .= "$description ($item_total) x $quantity: $line_total\n";
+    
+    if ($line_item->type == 'product') {
+      $prod_count++;
+    }
+  }
+  
+  // Worldpay allows up to 255 characters but appends "FuturePay" to recurring payments.
+  $order_post = substr($order_post, 0, 244);
+    
   // Add a summary of content to the description
   if ($settings['payment_parameters']['cart_in_desc']) {
-    $order_post = '';
-    $order_lines = $order->commerce_line_items[LANGUAGE_NONE];
-    $total_lines = count($order_lines);
-    
-    for ($line = 0; $line < $total_lines; $line++) {
-      $line_item = commerce_line_item_load($order_lines[$line]['line_item_id']);
-      $description = $line_item->line_item_label;
-      $quantity = $line_item->quantity;
-      //$item_total = $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'] / 100;
-      $item_total = commerce_currency_format(
-        $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'],
-        $line_item->commerce_unit_price[LANGUAGE_NONE][0]['currency_code']);
-      $line_total = commerce_currency_format(
-        $line_item->commerce_total[LANGUAGE_NONE][0]['amount'],
-        $line_item->commerce_total[LANGUAGE_NONE][0]['currency_code']);
-      
-      $order_post .= "$description ($item_total) x $quantity: $line_total\n";
-      // Worldpay allows up to 255 characters but appends "FuturePay" to recurring payments.
-      $order_post = substr($order_post, 0, 244);
-    }
-    
     $data += array(
       'desc' => t("Cart contents: \n@cart", array('@cart' => $order_post)),
     );
   }
+  
+  // Add a custom WorldPay param for product count
+  $data['C_productCount'] = $prod_count;
+  $data['C_lineItemCount'] = $total_lines;
   
   if (!$settings['payment_parameters']['edit_contact']) {
     $data += array(
