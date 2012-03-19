@@ -141,11 +141,12 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     'txn_type' => COMMERCE_CREDIT_AUTH_CAPTURE,
     'debug' => 'log',
     'payment_response_logging' => 'full_wppr',
-    'payment_choices' => array('visa-debit', 'visa-credit', 'visa-electron', 'mastercard', 'maestro', 'amex', 'diners', 'elv', 'jcb', 'laser', 'solo', 'amex'),
+    'payment_choices' => array_keys(_commerce_worldpay_bg_payment_card_types()),
     'confirmed_setup' => FALSE,
     'payment_parameters' => array(
       'test_mode' => TRUE,
       'test_result' => 'AUTHORISED',
+      'pm_select_localy' => FALSE,
       'cart_in_desc' => FALSE,
       'cancel_order' => FALSE,
       'edit_contact' => TRUE,
@@ -242,6 +243,13 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     '#description' => t('These options control what parameters are sent to RBS WorldPay when the customer submits the order.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
+  );
+  
+  $form['payment_parameters']['pm_select_localy'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Select payment method localy'),
+    '#default_value' => $settings['payment_parameters']['pm_select_localy'],
+    '#description' => t('When checked the payment methods will be chosen on this website instead of on WorldPay\'s server.'),
   );
   
   $form['payment_parameters']['test_mode'] = array(
@@ -426,6 +434,81 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
 }
 
 /**
+ * Payment method callback: submit form.
+ *
+ * This is the form the user sees when they choose the payment provider in
+ * checkout.
+ *
+ * Here we add the card selection stuff if it is enabled.
+ *
+ * @TODO
+ * Attach a help box for aiding the user in payment method choice.
+ */
+function commerce_worldpay_bg_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  $form = array();
+
+  // Merge in values from the order.
+  if (!empty($order->data['commerce_worldpay_bg'])) {
+    $pane_values += $order->data['commerce_worldpay_bg'];
+  }
+
+  // Merge in default values.
+  $pane_values += array(
+    'paymentType' => 'not_selected',
+  );
+
+  $card_options = array('not_selected' => '-- Please select a payment method --');
+  $cards = _commerce_worldpay_bg_payment_card_types();
+  foreach ($payment_method['settings']['payment_choices'] as $card_code) {
+    if ($card_code) {
+      $card_options[$card_code] = $cards[$card_code];
+    }
+  }
+
+  // Card selection
+  if ($payment_method['settings']['payment_parameters']['pm_select_localy']) {
+    $form['paymentType'] = array(
+      '#type' => 'select',
+      '#title' => t('Pay using'),
+      '#options' => $card_options,
+      '#required' => TRUE,
+      '#default_value' => $pane_values['paymentType'],
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Payment method callback: submit form validation.
+ *
+ */
+function commerce_worldpay_bg_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  // Make sure "Please select" is not selected
+  if ($pane_values['paymentType'] == 'not_selected') {
+    form_set_error(implode('][', array_merge($form_parents, array('paymentType'))), t('You need to select a payment method.'));
+
+    return FALSE;
+  }
+  // Check if it is a value we allow
+  if (!array_key_exists($pane_values['paymentType'], _commerce_worldpay_bg_payment_card_types())) {
+    form_set_error(implode('][', array_merge($form_parents, array('paymentType'))), t('An invalid WorldPay payment method choice was recived. Please try choosing a payment method again.'));
+
+    // Even though the form error is enough to stop the submission of the form,
+    // it's not enough to stop it from a Commerce standpoint because of the
+    // combined validation / submission going on per-pane in the checkout form.
+    return FALSE;
+  }
+}
+
+/**
+ * Payment method callback: submit form submission.
+ */
+function commerce_worldpay_bg_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  $order->data['commerce_worldpay_bg'] = $pane_values;
+}
+
+/**
  * Build the form to be submited to WorldPay
  */
 function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings) {
@@ -521,6 +604,10 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     // Used in WorldPay custom pages
     'C_siteTitle' => variable_get('site_name', 'Drupal Commerce'),
   ));
+  
+  if (isset($order->data['commerce_worldpay_bg']) && isset($order->data['commerce_worldpay_bg']['paymentType'])) {
+    $data['paymentType'] = $order->data['commerce_worldpay_bg']['paymentType'];
+  }
   
   // TODO
   // Implement suppot for authValidFrom and authValidTo in order to prevent
@@ -763,17 +850,18 @@ function _commerce_worldpay_build_sig_array($order_wrapper, $installation_id, $r
  */
 function _commerce_worldpay_bg_payment_card_types() {
   return array(
-    'visa-credit' => t('Visa Credit'),
-    'visa-debit' => t('Visa Debit'),
-    'visa-electron' => t('Visa Electron'),
-    'solo' => t('Solo'),
-    'mastercard' => t('Mastercard'),
-    'maestro' => t('Maestro'),
-    'amex' => t('American Express'),
-    'jcb' => t('JCB'),
-    'diners' => t('Diners'),
-    'laser' => t('Laser'),
-    'elv' => t('ELV'),
+    'VISA' => t('Visa Credit'),
+    'VISD' => t('Visa Debit'),
+    'VIED' => t('Visa Electron'),
+    'VISP' => t('Visa Purchasing'),
+    'SOLO' => t('Solo'),
+    'MSCD' => t('Mastercard'),
+    'DMC' => t('Mastercard Debit'),
+    'MAES' => t('Maestro'),
+    'AMEX' => t('American Express'),
+    'JCB' => t('JCB'),
+    'DINS' => t('Diners Card'),
+    'ELV' => t('ELV'),
   );
 }
 
