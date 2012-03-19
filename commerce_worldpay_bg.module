@@ -283,7 +283,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
   
   $form['payment_parameters']['edit_contact'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable editing of contact details on the payment page.'),
+    '#title' => t('Enable editing of contact details on the WorldPay\'s payment page.'),
     '#default_value' => $settings['payment_parameters']['edit_contact'],
   );
   
@@ -473,6 +473,22 @@ function commerce_worldpay_bg_submit_form($payment_method, $pane_values, $checko
       '#options' => $card_options,
       '#required' => TRUE,
       '#default_value' => $pane_values['paymentType'],
+    );
+  }
+
+  if (!$payment_method['settings']['payment_parameters']['edit_contact']) {
+    $form['bill_address_help'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array(
+          'commerce-worldpay-bg-biil-address-help',
+          'messages',
+          'warning',
+        ),
+      ),
+      'content' => array(
+        '#markup' => t('Before proceeding to the next step. Please verify the billing address is the one that belong to your chosen payment method.'),
+      ),
     );
   }
 
