@@ -528,27 +528,27 @@ function commerce_worldpay_bg_submit_form_submit($payment_method, $pane_form, $p
  * Build the form to be submited to WorldPay
  */
 function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings) {
-  $wrapper = entity_metadata_wrapper('commerce_order', $order);
-  $currency_code = $wrapper->commerce_order_total->currency_code->value();
-  $amount = $wrapper->commerce_order_total->amount->value();
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $currency_code = $order_wrapper->commerce_order_total->currency_code->value();
+  $amount = $order_wrapper->commerce_order_total->amount->value();
   // TODO Find out which should really be used for the ammount or are they the same?
-  //$amount = commerce_line_items_total($wrapper->commerce_line_items);
-  
+  //$amount = commerce_line_items_total($order_wrapper->commerce_line_items);
+
   // Ensure a default value for the payment_method setting.
   $settings += array('payment_method' => '');
 
   // Load customer profile.
   $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
-  
+
   // Get user billing address.
   $address = $profile->commerce_customer_address[LANGUAGE_NONE][0];
-  
+
   // Necessary for country_get_list() so we can get the country name. Is this
   // how the Drupal include files should be loaded?
   require_once DRUPAL_ROOT . '/includes/locale.inc';
   $countries = country_get_list();
   $country = $countries[$address['country']];
-  
+
   // Build the data array that will be translated into hidden form values.
   $data = array();
   if ($settings['payment_parameters']['test_mode']) {
@@ -561,6 +561,9 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     // Not sure if this would ever happen but hay
     if (!empty($address['name_line'])) {
       $worldpay_name = drupal_substr($address['name_line'], 0, 128);
+    }
+    elseif (!empty($address['first_name']) && !empty($address['last_name'])) {
+      $worldpay_name = drupal_substr($address['first_name'] . ' ' . $address['last_name'], 0, 128);
     }
     elseif (isset($address['organisation_name'])) {
       $worldpay_name = substr($address['organisation_name'], 0, 128);
@@ -584,7 +587,6 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   if (!empty($address['country'])) $data['country'] = $address['country'];
   
   $response_url = commerce_worldpay_bg_response_url($settings['payment_method'], $settings['payment_urls']['use_ssl']);
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $salt = $settings['payment_security']['md5_salt'];
   
   // Invoke the extra post field hook. We do this first so that we can overwrite
@@ -602,7 +604,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     'postcode' => $address['postal_code'],
     'countryString' => $country,
     'email' => $order->mail,
-    // TODO make it possible to a field to be used for the telephone data
+    // TODO make it possible to select a field to be used for the telephone data
     //'tel' => $profile->field_telephone,
     'MC_orderId' => $order->order_id,
     'lang' => $settings['payment_parameters']['lang'],
