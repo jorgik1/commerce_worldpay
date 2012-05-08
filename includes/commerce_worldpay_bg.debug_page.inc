@@ -10,8 +10,12 @@ require_once drupal_get_path('module', 'commerce_worldpay_bg') . '/includes/comm
  * A debuging callback
  */
 function commerce_worldpay_bg_debug_response_page($payment_method = NULL) {
-  if (!$payment_method) $payment_method = commerce_payment_method_instance_load('commerce_worldpay_bg|commerce_payment_commerce_worldpay_bg');
+  if (!$payment_method) {
+    if (!isset($_GET['skip_pm']))
+      $payment_method = commerce_payment_method_instance_load('commerce_worldpay_bg|commerce_payment_commerce_worldpay_bg');
+  }
   $order_id = isset($_GET['cartId']) ? (int) $_GET['cartId'] : 1;
+  $transId = isset($_GET['transId']) ? (int) $_GET['transId'] : 1;
   $debug_wppr = array
     (
       'region' => '',
@@ -62,7 +66,7 @@ Devon',
       'address' => '64 Langham Way
 Ivybridge
 Devon',
-      'transId' => '128236050',
+      'transId' => $transId,
       'msgType' => 'authResult',
       'town' => '',
       'authMode' => 'A',
