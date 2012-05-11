@@ -13,7 +13,7 @@ function commerce_worldpay_bg_schema() {
   $schema = array();
 
   $schema['commerce_worldpay_bg_txn'] = array(
-    'description' => 'Stores md5 of transaction data.',
+    'description' => 'Stores more details on a WorldPay transaction.',
     'fields' => array(
       'txn_id' => array(
         'description' => 'Serial numeric ID of the transaction in the local database.',
