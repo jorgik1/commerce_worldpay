@@ -487,7 +487,7 @@ function commerce_worldpay_bg_submit_form($payment_method, $pane_values, $checko
         ),
       ),
       'content' => array(
-        '#markup' => t('Before proceeding to the next step. Please verify the billing address is the one that belong to your chosen payment method.'),
+        '#markup' => t('Before proceeding to the next step. Please verify the billing address is the one that belongs to your chosen payment method.'),
       ),
     );
   }
@@ -502,7 +502,7 @@ function commerce_worldpay_bg_submit_form($payment_method, $pane_values, $checko
 function commerce_worldpay_bg_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // Make sure "Please select" is not selected
   if ($pane_values['paymentType'] == 'not_selected') {
-    form_set_error(implode('][', array_merge($form_parents, array('paymentType'))), t('You need to select a payment method.'));
+    form_set_error(implode('][', array_merge($form_parents, array('paymentType'))), t('You must select a payment method.'));
 
     return FALSE;
   }
