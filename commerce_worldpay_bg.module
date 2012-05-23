@@ -247,7 +247,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
   
   $form['payment_parameters']['pm_select_localy'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Select payment method localy'),
+    '#title' => t('Select payment method locally'),
     '#default_value' => $settings['payment_parameters']['pm_select_localy'],
     '#description' => t('When checked the payment methods will be chosen on this website instead of on WorldPay\'s server.'),
   );
