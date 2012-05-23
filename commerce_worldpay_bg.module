@@ -952,7 +952,7 @@ function commerce_worldpay_bg_convert_wppr_to_record($wppr) {
     'avs' => $wppr['AVS'],
     'authentication' => isset($wppr['authentication']) ? $wppr['authentication'] : '',
     'ip_address' => $wppr['ipAddress'],
-    'transaction_time' => (int) $wppr['transTime'],
+    'transaction_time' => round($wppr['transTime'] / 1000),
     'test_mode' => isset($wppr['testMode']) && $wppr['testMode'] > 0 ? 1 : 0,
   );
 }
