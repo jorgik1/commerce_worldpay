@@ -48,5 +48,5 @@
       </tr>
     </tbody>
   </table>
-  <p><a href="<?php print $return_url; ?>">Return to <?php $site_name ?></a></p>
+  <p><a href="<?php print $return_url; ?>">Return to <?php print $site_name ?></a></p>
 </header>
