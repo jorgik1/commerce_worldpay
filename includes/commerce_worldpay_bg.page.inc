@@ -322,6 +322,8 @@ function commerce_worldpay_bg_transaction_process($order, $payment_method, &$wpp
   $transaction->amount = commerce_currency_decimal_to_amount($wppr['authAmount'], $wppr['authCurrency']);
   $transaction->currency_code = $wppr['authCurrency'];
   $transaction->payload[REQUEST_TIME] = $wppr;
+  // Remove sensitive data
+  unset($transaction->payload[REQUEST_TIME]['callbackPW']);
 
   // Set the transaction's statuses based on the IPN's payment_status.
   $transaction->remote_status = $wppr['transStatus'];
