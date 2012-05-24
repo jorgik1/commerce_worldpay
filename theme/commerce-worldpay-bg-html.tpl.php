@@ -1,4 +1,4 @@
-<?php // kate: space-indent on; indent-width 2; mixedindent off; indent-mode normal;s
+<?php
 /**
  * @file
  * WorldPay custom theme

@@ -1,4 +1,4 @@
-<?php // kate: space-indent on; indent-width 2; mixedindent off; indent-mode normal;
+<?php
 
 /**
  * @file
@@ -804,7 +804,8 @@ function commerce_worldpay_bg_response_url($method_id = NULL, $https = FALSE) {
   if ($https) {
     // URL wil fail if https is not of type BOOL
     $https = TRUE;
-  } else {
+  }
+  else {
     $https = FALSE;
   }
   $parts = array(

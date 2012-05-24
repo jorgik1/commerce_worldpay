@@ -1,4 +1,4 @@
-<?php // kate: space-indent on; indent-width 2; mixedindent off; indent-mode normal;
+<?php
 /**
  * @file
  *   Various page callback related functions

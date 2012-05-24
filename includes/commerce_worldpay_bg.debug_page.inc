@@ -1,4 +1,4 @@
-<?php // kate: space-indent on; indent-width 2; mixedindent off; indent-mode normal;
+<?php
 /**
  * @file
  *   Debuging pages
@@ -15,7 +15,7 @@ function commerce_worldpay_bg_debug_response_page($payment_method = NULL) {
       $payment_method = commerce_payment_method_instance_load('commerce_worldpay_bg|commerce_payment_commerce_worldpay_bg');
   }
   $order_id = isset($_GET['cartId']) ? (int) $_GET['cartId'] : 1;
-  $transId = isset($_GET['transId']) ? (int) $_GET['transId'] : 1;
+  $trans_id = isset($_GET['transId']) ? (int) $_GET['transId'] : 1;
   $debug_wppr = array
     (
       'region' => '',
@@ -66,7 +66,7 @@ Devon',
       'address' => '64 Langham Way
 Ivybridge
 Devon',
-      'transId' => $transId,
+      'transId' => $trans_id,
       'msgType' => 'authResult',
       'town' => '',
       'authMode' => 'A',

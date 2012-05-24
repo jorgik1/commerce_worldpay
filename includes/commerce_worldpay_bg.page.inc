@@ -1,4 +1,4 @@
-<?php // kate: space-indent on; indent-width 2; mixedindent off; indent-mode normal;
+<?php
 /**
  * @file
  *   Various page callback related functions
@@ -27,7 +27,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
 
   // Attempt to load payment method from alternative means.
   if (!isset($payment_method)) {
-    if (!empty($wppr['transId']) && $prior_wppr = commerce_worldpay_bg_txn_load($wppr['transId'],'wp_txn_id')) {
+    if (!empty($wppr['transId']) && $prior_wppr = commerce_worldpay_bg_txn_load($wppr['transId'], 'wp_txn_id')) {
       if (!empty($prior_wppr['transaction_id'])) {
         $transaction = commerce_payment_transaction_load($prior_wppr['transaction_id']);
         if (empty($wppr['MC_orderId'])) {
@@ -123,7 +123,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   }
 
   // If this has been processed before and nothing appears to have changed
-  if (!empty($wppr['transId']) && $prior_wppr = commerce_worldpay_bg_txn_load($wppr['transId'],'wp_txn_id')) {
+  if (!empty($wppr['transId']) && $prior_wppr = commerce_worldpay_bg_txn_load($wppr['transId'], 'wp_txn_id')) {
     if ($prior_wppr['auth_amount'] == $wppr['authAmount'] && $prior_wppr['transStatus'] == $wppr['transaction_status']) {
       if ($full_log) {
         watchdog('commerce_worldpay_bg',
