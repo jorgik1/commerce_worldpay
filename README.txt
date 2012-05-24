@@ -31,18 +31,21 @@ INSTALLATION
 KNOWN ISSUES
 ------------
 
- * None so far. I'm sure they'll pop-up soon ;)
+ * This module will not work reliably at the moment if the order
+   field commerce_customer_billing is missing or if that field (profile) is
+   missing the field commerce_customer_address.
 
 TODO
 ----
-* Set appropriate Commerce Transaction status for SecureCode ('authentication')
-* Set appropriate Commerce Transaction status for AVS ('AVS')
+* Set appropriate Commerce Transaction status for SecureCode ('authentication').
+* Set appropriate Commerce Transaction status for AVS ('AVS').
 * Finish Bartik Worldpay theme (images etc).
- 
+* Make the module function fine without an addressfield or billing profile.
+
 SUPPORT
 -------
 
-If the encounter any issues, please file a support request
+If you encounter any issues, please file a support request
 at http://drupal.org/project/issues/commerce_worldpay_bg
 
 
