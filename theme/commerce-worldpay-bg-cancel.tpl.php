@@ -30,7 +30,7 @@
  * - $return_url: The URL to the final page of the Commerce checkout process.
  * - $site_name: The name set in Drupal configuration
  *
- * @see template_preprocess_commerce_worldpay_bg_success()
+ * @see template_preprocess_commerce_worldpay_bg_cancel()
  */
 ?>
 <header>

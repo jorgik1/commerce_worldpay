@@ -1,11 +1,15 @@
 <?php
 /**
  * @file
- *   Various page callback related functions
+ * Various page callback related functions.
+ *
+ * Currently functions related to processing the WorldPay responses are stored
+ * here as well since they are not needed elsewhere and would way down the 
+ * main module.
  */
 
 /**
- * Page callback that listens for transaction information from WorldPay
+ * Page callback that listens for transaction information from WorldPay.
  *
  * DRAFT
  * Here we create new transactions and load existing ones.
@@ -86,7 +90,8 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
     if (empty($wppr['transId']) && $wppr['transStatus'] != 'C') {
       if ($full_log)
         watchdog(
-          'commerce_worldpay_bg', 'Request with no transId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.', 
+          'commerce_worldpay_bg',
+          'Request with no transId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.',
           array(
             '@ip' => !empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0',
             '@method' => !empty($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
@@ -100,7 +105,8 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       drupal_add_http_header('Status', '404 Not Found');
       if ($full_log)
         watchdog(
-          'commerce_worldpay_bg', 'Request with no MC_orderId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.', 
+          'commerce_worldpay_bg',
+          'Request with no MC_orderId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.',
           array(
             '@ip' => !empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0',
             '@method' => !empty($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
@@ -122,7 +128,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       WATCHDOG_NOTICE);
   }
 
-  // If this has been processed before and nothing appears to have changed
+  // If this has been processed before and nothing appears to have changed.
   if (!empty($wppr['transId']) && $prior_wppr = commerce_worldpay_bg_txn_load($wppr['transId'], 'wp_txn_id')) {
     if ($prior_wppr['auth_amount'] == $wppr['authAmount'] && $prior_wppr['transStatus'] == $wppr['transaction_status']) {
       if ($full_log) {
@@ -146,8 +152,8 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-  // Check that the the transId and cartId are part of the same transaction
-  // TODO
+  // Authentication.
+  // TODO Check that the the transId and cartId are part of the same transaction.
   if ($debug_mode && $debug_wppr['skip_auth']) {
     $order->data['payment_redirect_key'] = '123';
   }
@@ -210,7 +216,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       // Now generate the HTML that WorldPay will pull from to generate its
       // custom page.
       // This is printed directly as we want to skip the rest of Drupal's HTML
-      // build. See: drupal_deliver_html_page()
+      // build. See: drupal_deliver_html_page().
       drupal_set_title(t('@site_name payment',
         array('@site_name' => variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment')));
       print _commerce_worldpay_bg_build_page($theme_data, 'success');
@@ -226,10 +232,10 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
         $tx_data = array_replace($prior_wppr, $tx_data);
         commerce_worldpay_bg_txn_save($tx_data);
       }
-      
+
       // Not totaly sure if this is the right thing to do here?
       commerce_payment_redirect_pane_previous_page($order);
-      
+
       if (!empty($payment_method) and !empty($payment_method['settings']['debug'])) {
         watchdog(
           'commerce_worldpay_bg', 'Creating cancel HTML for transaction @wp_txn_id.', 
@@ -238,13 +244,13 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
           ),
           WATCHDOG_NOTICE);
       }
-      
+
       drupal_set_title(t('@site_name payment', array(
         '@site_name' => variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment canceled')));
       print _commerce_worldpay_bg_build_page($theme_data, 'cancel');
       break;
   }
-  
+
 }
 
 /**
@@ -262,13 +268,11 @@ function _commerce_worldpay_bg_build_page($theme_data, $type = 'success') {
          );
 }
 
-function _commerce_worldpay_bg_payment_response_authenticate(
-  $order_wrapper, &$wppr, &$payment_method = NULL, &$wp_transaction = NULL
-) {
+function _commerce_worldpay_bg_payment_response_authenticate($order_wrapper, &$wppr, &$payment_method = NULL, &$wp_transaction = NULL) {
   $failed_authenticaion = FALSE;
   $message = '';
   $settings = $payment_method['settings'];
-  
+
   //If the merchant set a password compare them callbackPW
   if ($settings['payment_security']['use_password'] && !empty($settings['payment_security']['password'])) {
     if ($settings['payment_security']['password'] != $wppr['callbackPW']) {
@@ -278,9 +282,9 @@ function _commerce_worldpay_bg_payment_response_authenticate(
   }
 
   // TODO - Is it worth checking the User agent is the one WorldPay uses which is:
-  // User-Agent: WJHRO/1.0 (WorldPay Java HTTP Request Object)
+  // User-Agent: WJHRO/1.0 (WorldPay Java HTTP Request Object).
 
-  // TODO Reverse DNS lookup on IP address
+  // TODO Reverse DNS lookup on IP address.
 
   if ($failed_authenticaion) {
     drupal_add_http_header('Status', '403 Forbidden');
@@ -349,14 +353,14 @@ function commerce_worldpay_bg_transaction_process($order, $payment_method, &$wpp
         break;
     }
   }
-  
+
   // They don't give us very detailed transaction information do they?
   switch ($wppr['transStatus']) {
     case 'Y':
       $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
       $transaction->message = t('WorldPay excepted the user\'s transaction.');
       break;
-   
+
    // I don't think we should ever see this status at this point but incase
    // we do...
    case 'C':

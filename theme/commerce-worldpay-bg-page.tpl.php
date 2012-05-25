@@ -29,7 +29,7 @@
  * - $title:
  * - $site_url: URL of the web site
  *
- * @see template_preprocess_commerce_worldpay_bg_htmll()
+ * @see template_preprocess_commerce_worldpay_bg_page()
  */
 ?>
 <div id="page-wrapper">

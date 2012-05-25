@@ -35,7 +35,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      // transId
+      // transId.
       'wp_txn_id' => array(
         'description' => 'Wolrdpay\'s transaction id.',
         'type' => 'varchar',
@@ -43,7 +43,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // Foreign key
+      // Foreign key.
       'transaction_id' => array(
         'description' => 'The DC payment transaction ID the payment belongs to.',
         'type' => 'int',
@@ -51,7 +51,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      // authMode - A or E
+      // authMode - A or E.
       'authmode' => array(
         'description' => 'The authorisation mode used. A = Full auth. E = pre-auth',
         'type' => 'varchar',
@@ -59,7 +59,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // transStatus - 'pre' is our own status meaning that no comunication has happended with wolrdpay yet
+      // transStatus - 'pre' is our own status meaning that no comunication has happended with wolrdpay yet.
       'transaction_status' => array(
         'description' => 'The status set by Worldpay (Y or C).',
         'type' => 'varchar',
@@ -81,7 +81,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // companyName
+      // companyName.
       'company_name' => array(
         'description' => 'The company name Worldpay sent that corresponds to an installtion.',
         'type' => 'varchar',
@@ -105,7 +105,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      // authCurrency
+      // authCurrency.
       'auth_currency' => array(
         'description' => 'The currency code of the payment use by Worldpay.',
         'type' => 'varchar',
@@ -113,7 +113,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // authAmount
+      // authAmount.
       'auth_amount' => array(
         'description' => 'Amount that the transaction was authorised for, in the currency given as auth_currency..',
         'type' => 'numeric',
@@ -123,7 +123,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      // rawAuthMessage
+      // rawAuthMessage.
       'raw_auth_message' => array(
         'description' => 'The text received from the bank summarising the different states.',
         'type' => 'varchar',
@@ -131,7 +131,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // wafMerchMessage
+      // wafMerchMessage.
       'waf_merch_message' => array(
         'description' => 'Risk managment fraud messages.',
         'type' => 'varchar',
@@ -139,7 +139,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // AVS
+      // AVS.
       'avs' => array(
         'description' => 'Risk managment fraud messages.',
         'type' => 'varchar',
@@ -154,7 +154,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // The IP address WorldPay thinks the payment came from
+      // The IP address WorldPay thinks the payment came from.
       'ip_address' => array(
         'description' => 'IP address of user accessing WorldPay.',
         'type' => 'varchar',
@@ -174,7 +174,7 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      // transTime
+      // transTime.
       'transaction_time' => array(
         'description' => 'The Unix timestamp when Worldpay made contact. (transTime)',
         'type' => 'int',

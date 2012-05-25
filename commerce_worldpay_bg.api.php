@@ -7,7 +7,7 @@
 
 
 /**
- * Lets modules add extra data to post to WorldPay
+ * Lets modules add extra data to post to WorldPay.
  *
  * Before directing the user to WorldPay a set of hidden form details are
  * created that contain both mandatory and optional information for WorldPay
@@ -31,13 +31,14 @@
  *   The fully loaded profile assigned to this order.
  * @param $settings
  *   The payment methods settings.
- * @return
+ *
+ * @return array
  *   An array with keys matching WorldPay purchase transaction parameters.
  */
 function hook_commerce_worldpay_bg_post_data($order, $profile, $settings) {
-  // Example
+  // Example.
   return array(
-    // The key must match a WorldPay parameter
-    'tel' => $profile->field_phone_no[LANGUAGE_NONE][0]
+    // The key must match a WorldPay parameter.
+    'tel' => $profile->field_phone_no[LANGUAGE_NONE][0],
   );
 }
