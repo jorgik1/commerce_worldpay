@@ -1,8 +1,9 @@
 <?php
 /**
  * @file
+ * Debuging pages.
  *
- * Debuging pages. These are used to simulate a response by WorldPay.
+ * These are used to simulate a response by WorldPay.
  */
 
 require_once drupal_get_path('module', 'commerce_worldpay_bg') . '/includes/commerce_worldpay_bg.page.inc';

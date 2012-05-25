@@ -8,7 +8,7 @@
  */
 
 /**
- * Template preprocess for the overal page template.
+ * Template preprocess for the overal page (decleration) template.
  */
 function template_preprocess_commerce_worldpay_bg_html(&$variables) {
   // Pinched from template_preprocess_html()
@@ -30,10 +30,16 @@ function template_preprocess_commerce_worldpay_bg_html(&$variables) {
   $variables['title'] = variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment';
 }
 
+/**
+ * Template preprocess for the main body of the page.
+ */
 function template_preprocess_commerce_worldpay_bg_page(&$variables) {
   $variables['title'] = variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment';
 }
 
+/**
+ * Template preprocess for the success page.
+ */
 function template_preprocess_commerce_worldpay_bg_success(&$variables) {
   $order = $variables['order'];
   $variables['title'] = t('Payment has been completed');
@@ -44,9 +50,12 @@ function template_preprocess_commerce_worldpay_bg_success(&$variables) {
 
   $variables['return_url'] = url(
     'checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'],
-    array('absolute' => TRUE)+$url_options);
+    array('absolute' => TRUE) + $url_options);
 }
 
+/**
+ * Template preprocess for the cancel page.
+ */
 function template_preprocess_commerce_worldpay_bg_cancel(&$variables) {
   $order = $variables['order'];
   $variables['title'] = t('The transaction has been canceled');
@@ -54,8 +63,8 @@ function template_preprocess_commerce_worldpay_bg_cancel(&$variables) {
 
   $url_options = array();
   if ($variables['settings']['payment_urls']['force_non_ssl_links']) $url_options['https'] = FALSE;
-  // Return to the previous page when payment is canceled
+  // Return to the previous page when payment is canceled.
   $variables['return_url'] = url(
     'checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'],
-    array('absolute' => TRUE)+$url_options);
+    array('absolute' => TRUE) + $url_options);
 }

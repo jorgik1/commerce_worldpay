@@ -95,7 +95,7 @@ function commerce_worldpay_bg_theme() {
         'order_no' => NULL,
         'wp_txn_id' => NULL,
         'settings' => NULL,
-        'page' => NULL
+        'page' => NULL,
       ),
       'template' => 'theme/commerce-worldpay-bg-html',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
@@ -108,7 +108,7 @@ function commerce_worldpay_bg_theme() {
         'order_no' => NULL,
         'wp_txn_id' => NULL,
         'settings' => NULL,
-        'content' => NULL
+        'content' => NULL,
       ),
       'template' => 'theme/commerce-worldpay-bg-page',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
@@ -120,7 +120,7 @@ function commerce_worldpay_bg_theme() {
         'order_id' => NULL,
         'order_no' => NULL,
         'wp_txn_id' => NULL,
-        'settings' => NULL
+        'settings' => NULL,
       ),
       'template' => 'theme/commerce-worldpay-bg-success',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
@@ -132,7 +132,7 @@ function commerce_worldpay_bg_theme() {
         'order_id' => NULL,
         'order_no' => NULL,
         'wp_txn_id' => NULL,
-        'settings' => NULL
+        'settings' => NULL,
       ),
       'template' => 'theme/commerce-worldpay-bg-cancel',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
@@ -159,8 +159,9 @@ function commerce_worldpay_bg_commerce_payment_method_info() {
 }
 
 /**
- * Settings form for Worldpay payment method. Used to set vendor name and
- * secret key within Rules settings.
+ * Settings form for Worldpay payment method.
+ *
+ * Used to set vendor name and secret key within Rules settings.
  */
 function commerce_worldpay_bg_settings_form($settings = NULL) {
   $form = array();
@@ -212,7 +213,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
       array(
         '@response_url' => '<wpdisplay item=' . C_WORLDPAY_BG_RESPONSE_URL_TOKEN . '-ppe empty="' .
           url('commerce/worldpay/bg/response', array()) . '">',
-        '@sig' => join(':', _commerce_worldpay_bg_md5_signature_fields())
+        '@sig' => join(':', _commerce_worldpay_bg_md5_signature_fields()),
       )
     ),
     '#tree' => FALSE,
@@ -224,8 +225,15 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     '#default_value' => $settings['confirmed_setup'],
     '#required' => TRUE,
     '#tree' => TRUE,
-    // Make it more convieniant to access
-    '#parents' => array('parameter', 'payment_method', 'settings', 'payment_method', 'settings', 'confirmed_setup'),
+    // Make it more convieniant to access.
+    '#parents' => array(
+      'parameter',
+      'payment_method',
+      'settings',
+      'payment_method',
+      'settings',
+      'confirmed_setup',
+    ),
   );
 
   $form['installation_id'] = array(
@@ -240,7 +248,12 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     '#type' => 'select',
     '#title' => t('Debug mode'),
     '#multiple' => FALSE,
-    '#options' => array('log' => t('Log'), 'screen' => t('Screen'), 'both' => t('Both'), 'none' => t('None')),
+    '#options' => array(
+      'log' => t('Log'),
+      'screen' => t('Screen'),
+      'both' => t('Both'),
+      'none' => t('None'),
+    ),
     '#default_value' => $settings['debug'],
   );
 
@@ -541,7 +554,6 @@ function commerce_worldpay_bg_submit_form($payment_method, $pane_values, $checko
 
 /**
  * Payment method callback: submit form validation.
- *
  */
 function commerce_worldpay_bg_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // Make sure "Please select" is not selected
@@ -578,7 +590,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $currency_code = $order_wrapper->commerce_order_total->currency_code->value();
   $amount = $order_wrapper->commerce_order_total->amount->value();
   // TODO Find out which should really be used for the ammount or are they the same?
-  //$amount = commerce_line_items_total($order_wrapper->commerce_line_items);
+  // $amount = commerce_line_items_total($order_wrapper->commerce_line_items);
 
   // Ensure a default value for the payment_method setting.
   $settings += array('payment_method' => '');
@@ -616,7 +628,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     }
   }
 
-  // TODO Look into producing a formater for addressfield
+  // TODO Look into producing a formater for addressfield.
   $address_post = (!empty($address['thoroughfare']) ? $address['thoroughfare'] . "\n" : '') .
     (!empty($address['premise']) ? $address['premise'] . "\n" : '') .
     (!empty($address['sub_premise']) ? $address['sub_premise'] . "\n" : '') .
@@ -635,8 +647,8 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $response_url = commerce_worldpay_bg_response_url($settings['payment_method'], $settings['payment_urls']['use_ssl']);
   $salt = $settings['payment_security']['md5_salt'];
 
-  // Invoke the extra post field hook. We do this first so that we can overwrite
-  // fields that should not be set by this hook
+  // Invoke the extra post field hook. We do this first so that we can
+  // overwrite fields that should not be set by this hook.
   $extra_data = module_invoke_all('commerce_worldpay_bg_post_data', $order, $profile, $settings);
   if (!is_array($extra_data)) $extra_data = array();
 
@@ -651,7 +663,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     'countryString' => $country,
     'email' => $order->mail,
     // TODO make it possible to select a field to be used for the telephone data
-    //'tel' => $profile->field_telephone,
+    // 'tel' => $profile->field_telephone,
     'MC_orderId' => $order->order_id,
     'lang' => $settings['payment_parameters']['lang'],
     'M_http_host' => $_SERVER['HTTP_HOST'],
@@ -705,14 +717,14 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   // Worldpay allows up to 255 characters but appends "FuturePay" to recurring payments.
   $order_post = substr($order_post, 0, 244);
 
-  // Add a summary of content to the description
+  // Add a summary of content to the description.
   if ($settings['payment_parameters']['cart_in_desc']) {
     $data += array(
       'desc' => t("Cart contents: \n@cart", array('@cart' => $order_post)),
     );
   }
 
-  // Add a custom WorldPay param for product count
+  // Add a custom WorldPay param for product count.
   $data['C_productCount'] = $prod_count;
   $data['C_lineItemCount'] = $total_lines;
 

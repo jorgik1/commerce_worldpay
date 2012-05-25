@@ -28,7 +28,7 @@
  * expect the same variables availble to html.tpl.php
  *
  * Variables:
- * - $installtion_id: The WorldPay installtion ID stored in the sites 
+ * - $installtion_id: The WorldPay installtion ID stored in the sites
  *   Commerece payment settings page.
  * - $order_id: The current Commerec order's ID
  * - $order_no: The current Commerec order's number
@@ -48,7 +48,7 @@
   <title><?php print $head_title; ?></title>
   <!-- Embed the stylesheet stored on WorldPay's server -->
   <style type="text/css">
-  <?php if ($settings['theme_debug']): //Allows simulating a bit of WorldPay's behavior ?>
+  <?php if ($settings['theme_debug']): //Allows simulating a bit of WorldPay's behavior. ?>
   <?php include drupal_get_path('module', 'commerce_worldpay_bg') . '/worldpay page example/stylesheet.css'; ?>
   <?php else: ?>
   <WPDISPLAY FILE=stylesheet.css>
