@@ -4,8 +4,7 @@ CONTENTS OF THIS FILE
  * Introduction
  * Installation
  * Payment Success and Cancellation pages
- * Resources on customizing
- * Sponsorship
+ * NOTES
 
 INTRODUCTION
 ------------
@@ -29,7 +28,7 @@ INSTALLATION
    - In the left navigation click "Page Format" and blank all the fields.
    
  * Now in the left navigation click "File Management". Here you will one by
-   one upload all the files in this folder exluding this README file. Do not
+   one upload all the files in this folder excluding this README file. Do not
    enter anything in the "WorldPay Name for File".
    
  * Now you can preview your customized WorldPay payment pages by clicking on
@@ -38,15 +37,17 @@ INSTALLATION
 PAYMENT SUCCESS AND CANCELLATION PAGES
 --------------------------------------
 
-The Payment Success and Cancellation pages (typicaly resultY.html and 
+The Payment Success and Cancellation pages (typically resultY.html and
 result.C.html files in WorldPay) are built by Drupal and fetched by WorldPay
 as needed. They are customized just like any other Drupal template files. You
-can find the default implementations in the theme/ folder.
+can find the default implementations in the theme/ folder. Note that these
+templates can make use of <WPDISPLAY> tags just like the ones directly hosted
+on WorldPay's payment servers.
 
 NOTES
 -----
 
-Any CSS file named stylesheet.css is embeded, rather than linked to in the
+Any CSS file named stylesheet.css is embedded, rather than linked to in the
 payment pages. If you do not want this, rename the file. Next create a head.html
 file and inside add:
 <link rel="stylesheet" href="/i/<wpdisplay item=instId>/[stylesheetname].css" type="text/css" />

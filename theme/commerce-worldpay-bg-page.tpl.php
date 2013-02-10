@@ -23,11 +23,11 @@
  * Variables:
  * - $installtion_id: The WorldPay installtion ID stored in the sites 
  *   Commerece payment settings page.
- * - $order_id: The current Commerec order's ID
- * - $order_no: The current Commerec order's number
- * - $content: The rendered content of the page
- * - $title:
- * - $site_url: URL of the web site
+ * - $order_id: The current Commerec order's ID.
+ * - $order_no: The current Commerec order's number.
+ * - $content: The rendered content of the page.
+ * - $title: The title of the page.
+ * - $site_url: URL of the web site.
  * - $site_id: The value set for Site ID in the payment module settings
  *   page.
  *

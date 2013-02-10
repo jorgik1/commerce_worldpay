@@ -9,7 +9,20 @@
 require_once drupal_get_path('module', 'commerce_worldpay_bg') . '/includes/commerce_worldpay_bg.page.inc';
 
 /**
- * A debuging callback
+ * A debuging callback.
+ * 
+ * To trigger this page simply visit:
+ * http://[drupal_base]/commerce_worldpay/bg/response/debug_me?cartId=[valid_cart_id]
+ * and the current theme's WorldPay template page will be generated for
+ * previewing.
+ * Some URL query params can be passed to trigger different reactions:
+ * @url_param int cartId
+ *  REQUIRED This must be a valid existing order ID.
+ * @url_param string transId
+ *  This represents a WorldPay generated transaction ID. It can be anything.
+ * @url_param transStatus
+ *  A single character of either 'Y' (default) for choosing the success
+ *  response page, or 'C' for choosing the cancel page.
  */
 function commerce_worldpay_bg_debug_response_page($payment_method = NULL) {
   if (!$payment_method) {
@@ -18,6 +31,7 @@ function commerce_worldpay_bg_debug_response_page($payment_method = NULL) {
   }
   $order_id = isset($_GET['cartId']) ? (int) $_GET['cartId'] : 1;
   $trans_id = isset($_GET['transId']) ? (int) $_GET['transId'] : 1;
+  $trans_status = isset($_GET['transStatus']) && ($_GET['transStatus'] == 'C') ? $_GET['transStatus'] : 'Y';
   $debug_wppr = array(
     'region' => '',
     'authAmountString' => 'US&#36;35.45',
@@ -34,7 +48,7 @@ function commerce_worldpay_bg_debug_response_page($payment_method = NULL) {
     'lang' => 'en',
     'rawAuthCode' => 'A',
     'callbackPW' => 'pass',
-    'transStatus' => 'Y',
+    'transStatus' => $trans_status,
     'amountString' => 'US&#36;35.45',
     'authCost' => '35.45',
     'currency' => 'USD',
