@@ -5,7 +5,22 @@
  *
  * This includes the base template pre/process functions used by the WorldPay
  * payment response templates.
+ * 
+ * NOTE: You can test these themes by using the debugging URL:
+ * http://[drupal_base]/commerce_worldpay/bg/response/debug_me?cartId=[valid_cart_id]
  */
+
+function _template_common_variables_worldpay_bg(&$variables) {
+  if (empty($variables['settings']['site_id'])) {
+    $variables['site_id'] = '';
+  }
+  else {
+    $variables['site_id'] = $variables['settings']['site_id'];
+  }
+  
+  $variables['site_name'] = variable_get('site_name', 'Drupal');
+  
+}
 
 /**
  * Template preprocess for the overal page (decleration) template.
@@ -19,6 +34,8 @@ function template_preprocess_commerce_worldpay_bg_html(&$variables) {
   $variables['grddl_profile']     = 'http://www.w3.org/1999/xhtml/vocab';
   $variables['language']          = $GLOBALS['language'];
   $variables['language']->dir     = $GLOBALS['language']->direction ? 'rtl' : 'ltr';
+  
+  _template_common_variables_worldpay_bg($variables);
 
   if (drupal_get_title()) {
     $variables['head_title'] = strip_tags(drupal_get_title());
@@ -28,6 +45,19 @@ function template_preprocess_commerce_worldpay_bg_html(&$variables) {
   }
 
   $variables['title'] = variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment';
+  
+  $variables['body_attributes_array'] = array();
+  
+  if (!empty($variables['settings']['site_id'])) {
+    $variables['body_attributes_array']['class'] = 'css-' . drupal_clean_css_identifier($variables['settings']['site_id']);
+  }
+}
+
+/**
+ * Template process for the overal page template.
+ */
+function template_process_commerce_worldpay_bg_html(&$variables) {
+  $variables['body_attributes'] = drupal_attributes($variables['body_attributes_array']);
 }
 
 /**
@@ -35,6 +65,7 @@ function template_preprocess_commerce_worldpay_bg_html(&$variables) {
  */
 function template_preprocess_commerce_worldpay_bg_page(&$variables) {
   $variables['title'] = variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment';
+  _template_common_variables_worldpay_bg($variables);
 }
 
 /**
@@ -43,7 +74,7 @@ function template_preprocess_commerce_worldpay_bg_page(&$variables) {
 function template_preprocess_commerce_worldpay_bg_success(&$variables) {
   $order = $variables['order'];
   $variables['title'] = t('Payment has been completed');
-  $variables['site_name'] = variable_get('site_name', 'Drupal');
+  _template_common_variables_worldpay_bg($variables);
 
   $url_options = array();
   if ($variables['settings']['payment_urls']['force_non_ssl_links']) $url_options['https'] = FALSE;
@@ -59,7 +90,7 @@ function template_preprocess_commerce_worldpay_bg_success(&$variables) {
 function template_preprocess_commerce_worldpay_bg_cancel(&$variables) {
   $order = $variables['order'];
   $variables['title'] = t('The transaction has been canceled');
-  $variables['site_name'] = variable_get('site_name', 'Drupal');
+  _template_common_variables_worldpay_bg($variables);
 
   $url_options = array();
   if ($variables['settings']['payment_urls']['force_non_ssl_links']) $url_options['https'] = FALSE;

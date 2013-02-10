@@ -29,6 +29,8 @@
  * - $title: The title of the page
  * - $return_url: The URL to the final page of the Commerce checkout process.
  * - $site_name: The name set in Drupal configuration
+ * - $site_id: The value set for Site ID in the payment module settings
+ *   page.
  *
  * @see template_preprocess_commerce_worldpay_bg_cancel()
  */

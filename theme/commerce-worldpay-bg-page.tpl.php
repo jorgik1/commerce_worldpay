@@ -28,6 +28,8 @@
  * - $content: The rendered content of the page
  * - $title:
  * - $site_url: URL of the web site
+ * - $site_id: The value set for Site ID in the payment module settings
+ *   page.
  *
  * @see template_preprocess_commerce_worldpay_bg_page()
  */

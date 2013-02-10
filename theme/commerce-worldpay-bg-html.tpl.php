@@ -39,6 +39,17 @@
  * - $grddl_profile: A GRDDL profile allowing agents to extract the RDF data.
  * - $head_title: A modified version of the page title, for use in the TITLE
  *   tag.
+ * - $body_attributes: Contains any html attribute definitions intended for the
+ *   body tag. These are generated in theme's preprocess' $body_attributes_array.
+ * - $site_id: This is a customisable string set in the payment modules
+ *   settings page. The same value is passed to WorldPay as <WPDISPLAY ITEM=C_siteId>.
+ *   It is useful for creating alternate styles and selecting alternate images.
+ *   For example. If you have two sites with their own brands but just one
+ *   WorldPay merchant account. You can show the different logos by prefixing
+ *   the image files name with the $site_id like so:
+ *   <img src="< ?php print $site_id; ? >-logo.png" /> or if it is a WorldPay hosted
+ *   payment page template:
+ *   <img src="<WPDISPLAY ITEM=C_siteId-ppe empty='fallback_id'>-logo.png" />
  *
  * @see template_preprocess_commerce_worldpay_bg_html()
  */
@@ -55,7 +66,7 @@
   <?php endif; ?>
   </style>
 </head>
-<body>
+<body <?php print $body_attributes; ?>>
   <?php print $page; ?>
 </body>
 </html>

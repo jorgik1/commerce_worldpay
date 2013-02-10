@@ -173,6 +173,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     'txn_type' => COMMERCE_CREDIT_AUTH_CAPTURE,
     'debug' => 'log',
     'payment_response_logging' => 'full_wppr',
+    'site_id' => substr(drupal_clean_css_identifier($_SERVER['HTTP_HOST']), 0, 10),
     'payment_choices' => array_keys(_commerce_worldpay_bg_payment_card_types()),
     'confirmed_setup' => FALSE,
     'payment_parameters' => array(
@@ -265,6 +266,15 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
       'full_wppr' => t('Log notifications with the full WorldPay Pyament Notifications during validation and processing (used for debugging).'),
     ),
     '#default_value' => $settings['payment_response_logging'],
+  );
+  
+  $form['site_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Site ID'),
+    '#description' => t('A custom identifier that will be passed to WorldPay. This is useful for using one WorldPay account for multiple web sites.'),
+    '#size' => 10,
+    '#default_value' => $settings['site_id'],
+    '#required' => FALSE,
   );
 
   $form['payment_methods_container'] = array(
@@ -680,6 +690,14 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     // Used in WorldPay custom pages
     'C_siteTitle' => variable_get('site_name', 'Drupal Commerce'),
   ));
+
+  // Allows for generating some unique information that can be used
+  // for CSS selectors and folder names. Allowing one WorldPay
+  // account to serve multiple sites with each altering its
+  // presentation.
+  if (isset($settings['site_id'])) {
+    $data['C_siteId'] = $settings['site_id'];
+  }
 
   if (isset($order->data['commerce_worldpay_bg']) && isset($order->data['commerce_worldpay_bg']['paymentType'])) {
     $data['paymentType'] = $order->data['commerce_worldpay_bg']['paymentType'];
