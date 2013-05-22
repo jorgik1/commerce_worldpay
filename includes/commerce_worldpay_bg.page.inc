@@ -20,7 +20,6 @@
  * --- Success page or cancel page (resultY.html || resultC.html)
  */
 function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr = array()) {
-  $output = '';
   $order = NULL;
   $skip_process = FALSE;
 
@@ -74,9 +73,8 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   }
 
   // If the payment method specifies full IPN logging, do it now.
-  if (!empty($payment_method['settings']['payment_response_logging']) &&
-    $payment_method['settings']['payment_response_logging'] == 'full_wppr'
- ) {
+  if (!empty($payment_method['settings']['payment_response_logging'])
+    && $payment_method['settings']['payment_response_logging'] == 'full_wppr') {
     $full_log = TRUE;
   }
   else {
@@ -91,7 +89,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
     $ip = ip_address();
 
     if (empty($wppr['transId']) && $wppr['transStatus'] != 'C') {
-      if ($full_log)
+      if ($full_log) {
         watchdog(
           'commerce_worldpay_bg',
           'Request with no transId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.',
@@ -101,12 +99,13 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
             '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN',
           ),
           WATCHDOG_NOTICE);
-      return;
+        return;
+      }
     }
 
     if (empty($wppr['MC_orderId'])) {
       drupal_add_http_header('Status', '404 Not Found');
-      if ($full_log)
+      if ($full_log) {
         watchdog(
           'commerce_worldpay_bg',
           'Request with no MC_orderId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.',
@@ -116,9 +115,9 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
             '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN'
           ),
           WATCHDOG_NOTICE);
-      return;
+        return;
+      }
     }
-
   }
 
   if ($full_log) {
@@ -230,13 +229,13 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       $theme_data['settings']['context'] = 'result_cancel';
       if ($prior_wppr) {
         // Don't know if WorldPay ever changes transStatus after its been set
-        // the first time but of it does we update our transaction info
+        // the first time but if it does we update our transaction info
         $tx_data = commerce_worldpay_bg_convert_wppr_to_record($wppr);
         $tx_data = array_replace($prior_wppr, $tx_data);
         commerce_worldpay_bg_txn_save($tx_data);
       }
 
-      // Not totaly sure if this is the right thing to do here?
+      // Not totally sure if this is the right thing to do here?
       commerce_payment_redirect_pane_previous_page($order);
 
       if (!empty($payment_method) and !empty($payment_method['settings']['debug'])) {
