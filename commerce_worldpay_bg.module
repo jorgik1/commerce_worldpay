@@ -639,7 +639,8 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     }
   }
 
-  // TODO Look into producing a formater for addressfield.
+  // @todo provide a hook to override address_post in order to give other modules a chance to provide this info from elsewhere.
+  // TODO Look into producing a formatter for addressfield.
   $address_post = (!empty($address['thoroughfare']) ? $address['thoroughfare'] . "\n" : '') .
     (!empty($address['premise']) ? $address['premise'] . "\n" : '') .
     (!empty($address['sub_premise']) ? $address['sub_premise'] . "\n" : '') .
@@ -648,7 +649,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     (!empty($address['sub_administrative_area']) ? $address['sub_administrative_area'] . "\n" : '') .
     (!empty($address['administrative_area']) ? $address['administrative_area'] . "\n" : '');
 
-  // Seperate post fields.
+  // Separate post fields.
   if (!empty($address['thoroughfare'])) $data['address1'] = $address['thoroughfare'];
   if (!empty($address['premise'])) $data['address2'] = $address['premise'];
   if (!empty($address['locality'])) $data['town'] = $address['locality'];
@@ -661,8 +662,11 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   // Invoke the extra post field hook. We do this first so that we can
   // overwrite fields that should not be set by this hook.
   $extra_data = module_invoke_all('commerce_worldpay_bg_post_data', $order, $profile, $settings);
-  if (!is_array($extra_data)) $extra_data = array();
+  if (!is_array($extra_data)) {
+    $extra_data = array();
+  }
 
+  // @todo wouldn't it be easier to add those values to $data and then do a drupal_alter?
   $data += array_replace($extra_data, array(
     'instId' => $settings['installation_id'],
     'amount' => round(commerce_currency_amount_to_decimal($amount, $currency_code), 2),
@@ -705,7 +709,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   }
 
   // TODO
-  // Implement suppot for authValidFrom and authValidTo in order to prevent
+  // Implement support for authValidFrom and authValidTo in order to prevent
   // purchases on limited time offers.
 
   // Get the product line item count and build cart description.
@@ -713,7 +717,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $order_lines = $order->commerce_line_items[LANGUAGE_NONE];
   $total_lines = count($order_lines);
   $prod_count = 0;
-
+  // @todo use a foreach over  $order->commerce_line_items[LANGUAGE_NONE] so we don't need the vars defined above.
   for ($line = 0; $line < $total_lines; $line++) {
     $line_item = commerce_line_item_load($order_lines[$line]['line_item_id']);
     $description = $line_item->line_item_label;
@@ -774,16 +778,18 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   );
 
   if ($settings['debug'] != 'none') {
-    if ($settings['debug'] == 'screen' || $settings['debug'] == 'both')
+    if ($settings['debug'] == 'screen' || $settings['debug'] == 'both') {
       debug($data, 'Post data');
-    if ($settings['debug'] == 'log' || $settings['debug'] == 'both')
-        watchdog(
-          'commerce_worldpay_bg', "Data to be posted for order !order_id:\n <pre>!log</pre>.", 
-          array(
-            '!order_id' => $order->order_id,
-            '!log' => print_r($data, TRUE)
-          ),
-          WATCHDOG_NOTICE);
+    }
+    if ($settings['debug'] == 'log' || $settings['debug'] == 'both') {
+      watchdog(
+        'commerce_worldpay_bg', "Data to be posted for order !order_id:\n <pre>!log</pre>.",
+        array(
+          '!order_id' => $order->order_id,
+          '!log' => print_r($data, TRUE)
+        ),
+        WATCHDOG_NOTICE);
+    }
   }
 
   return $form;
