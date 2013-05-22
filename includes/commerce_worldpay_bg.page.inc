@@ -260,14 +260,9 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
  */
 function _commerce_worldpay_bg_build_page($theme_data, $type = 'success') {
   drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
-  return theme(
-          'commerce_worldpay_bg_html',
-          array(
-            'page' => theme('commerce_worldpay_bg_page', array(
-                'content' => theme('commerce_worldpay_bg_' . $type, $theme_data)
-             ) + $theme_data),
-          ) + $theme_data
-         );
+  $content = theme('commerce_worldpay_bg_' . $type, $theme_data);
+  $page = theme('commerce_worldpay_bg_page', array('content' => $content) + $theme_data);
+  return theme('commerce_worldpay_bg_html', array('page' => $page) + $theme_data);
 }
 
 /**

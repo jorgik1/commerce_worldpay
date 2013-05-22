@@ -86,54 +86,32 @@ function commerce_worldpay_bg_menu() {
  * Implements hook_theme().
  */
 function commerce_worldpay_bg_theme() {
+  $common_vars = array(
+    'installation_id' => NULL,
+    'order' => NULL,
+    'order_id' => NULL,
+    'order_no' => NULL,
+    'wp_txn_id' => NULL,
+    'settings' => NULL,
+  );
   return array(
     'commerce_worldpay_bg_html' => array(
-      'variables' => array(
-        'installation_id' => NULL,
-        'order' => NULL,
-        'order_id' => NULL,
-        'order_no' => NULL,
-        'wp_txn_id' => NULL,
-        'settings' => NULL,
-        'page' => NULL,
-      ),
+      'variables' => $common_vars += array('page' => NULL),
       'template' => 'theme/commerce-worldpay-bg-html',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
     'commerce_worldpay_bg_page' => array(
-      'variables' => array(
-        'installation_id' => NULL,
-        'order' => NULL,
-        'order_id' => NULL,
-        'order_no' => NULL,
-        'wp_txn_id' => NULL,
-        'settings' => NULL,
-        'content' => NULL,
-      ),
+      'variables' => $common_vars += array('content' => NULL),
       'template' => 'theme/commerce-worldpay-bg-page',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
     'commerce_worldpay_bg_success' => array(
-      'variables' => array(
-        'installation_id' => NULL,
-        'order' => NULL,
-        'order_id' => NULL,
-        'order_no' => NULL,
-        'wp_txn_id' => NULL,
-        'settings' => NULL,
-      ),
+      'variables' => $common_vars,
       'template' => 'theme/commerce-worldpay-bg-success',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
     'commerce_worldpay_bg_cancel' => array(
-      'variables' => array(
-        'installation_id' => NULL,
-        'order' => NULL,
-        'order_id' => NULL,
-        'order_no' => NULL,
-        'wp_txn_id' => NULL,
-        'settings' => NULL,
-      ),
+      'variables' => $common_vars,
       'template' => 'theme/commerce-worldpay-bg-cancel',
       'file' => 'includes/commerce_worldpay_bg.theme.inc',
     ),
