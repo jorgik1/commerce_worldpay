@@ -822,7 +822,8 @@ function commerce_worldpay_bg_redirect_form($form, &$form_state, $order, $paymen
     return array();
   }
 
-  // Disable redirect if debugging - This is a bit of a HACK so probably should go at some point.
+  // Disable redirect if debugging.
+  // @todo This is a bit of a HACK, find a better way for that.
   if ($payment_method['settings']['debug'] == 'screen' || $payment_method['settings']['debug'] == 'both' ) {
     drupal_add_js(';(function($) {Drupal.behaviors.commercePayment = {attach: function (context, settings) {}}})(jQuery);', array('type' => 'inline', 'weight' => 5));
   }
@@ -883,7 +884,7 @@ function commerce_worldpay_bg_valid_url($element, &$form_state, $form) {
  */
 function commerce_worldpay_bg_response_url($method_id = NULL, $https = FALSE) {
   if ($https) {
-    // URL wil fail if https is not of type BOOL
+    // URL will fail if https is not of type BOOL
     $https = TRUE;
   }
   else {
@@ -903,7 +904,7 @@ function commerce_worldpay_bg_response_url($method_id = NULL, $https = FALSE) {
 }
 
 /**
- * Makes sure a password is set if the use password option is checked.
+ * Makes sure a password is set if the "use password" option is checked.
  */
 function _commerce_worldpay_bg_validate_password($element, &$form_state, $form) {
   $values = $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings'];
@@ -911,7 +912,7 @@ function _commerce_worldpay_bg_validate_password($element, &$form_state, $form) 
     if (empty($element['#value'])) {
       form_set_error(
         'parameter][payment_method][settings][payment_method][settings][payment_security][password',
-        t('Please set a password or uncheck "Use WorldPay installation password?" if one is not used.')
+        t('Please set a password or uncheck "Use WorldPay installation password?" if you don\'t use one.')
       );
     }
   }
@@ -924,6 +925,14 @@ function commerce_worldpay_bg_build_md5($wp_sig_fields, $salt) {
   return md5($salt . ':' . join(':', $wp_sig_fields));
 }
 
+/**
+ * @todo document this function
+ *
+ * @param $order_wrapper
+ * @param $installation_id
+ * @param $response_url
+ * @return array
+ */
 function _commerce_worldpay_bg_build_sig_array($order_wrapper, $installation_id, $response_url) {
   // Current fields are: instId, amount, currency, cartId, MC_orderId, C_WORLDPAY_BG_RESPONSE_URL_TOKEN
   $currency_code = $order_wrapper->commerce_order_total->currency_code->value();
