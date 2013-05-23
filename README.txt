@@ -72,22 +72,26 @@ KNOWN ISSUES
  * This module will not work reliably at the moment if the order
    field commerce_customer_billing is missing or if that field (profile) is
    missing the field commerce_customer_address.
+   See http://drupal.org/node/2001424.
  * The order object must have the order::mail property set before the payment
    transaction is triggered. If you are using Drupal Commerce's account
    information pane then this is already done for you. But if you are
    gathering account details using a custom method, then you must ensure you
    correctly populate the order object used in checkout.
+   See http://drupal.org/node/2001424
  * The "Add payment" tool on the order UI Payment page will not work if it uses
    this module to make a transaction. I'm not sure if this can be made to work
-   with this service. If anyone has any ideas on how to solve this please open
-   an issue on the feature.
+   with this service. See http://drupal.org/node/2001442.
 
 TODO
 ----
 * Set appropriate Commerce Transaction status for SecureCode ('authentication').
+  See http://drupal.org/node/2001452.
 * Set appropriate Commerce Transaction status for AVS ('AVS').
-* Finish Bartik WorldPay theme (images etc.).
+  See http://drupal.org/node/2001454.
+* Finish Bartik WorldPay theme (images etc.): http://drupal.org/node/2001458
 * Make the module function fine without an addressfield or billing profile.
+  See http://drupal.org/node/2001424
 
 SUPPORT
 -------
