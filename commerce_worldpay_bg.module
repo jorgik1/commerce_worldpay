@@ -692,12 +692,10 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
 
   // Get the product line item count and build cart description.
   $order_post = '';
-  $order_lines = $order->commerce_line_items[LANGUAGE_NONE];
-  $total_lines = count($order_lines);
+  $commerce_line_items = field_get_items('commerce_order', $order, 'commerce_line_items');
   $prod_count = 0;
-  // @todo use a foreach over  $order->commerce_line_items[LANGUAGE_NONE] so we don't need the vars defined above.
-  for ($line = 0; $line < $total_lines; $line++) {
-    $line_item = commerce_line_item_load($order_lines[$line]['line_item_id']);
+  foreach ($commerce_line_items as $item) {
+    $line_item = commerce_line_item_load($item['line_item_id']);
     $description = $line_item->line_item_label;
     $quantity = $line_item->quantity;
     //$item_total = $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'] / 100;
@@ -727,7 +725,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
 
   // Add a custom WorldPay param for product count.
   $data['C_productCount'] = $prod_count;
-  $data['C_lineItemCount'] = $total_lines;
+  $data['C_lineItemCount'] = count($commerce_line_items);
 
   if (!$settings['payment_parameters']['edit_contact']) {
     $data += array(
