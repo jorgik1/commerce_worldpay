@@ -23,7 +23,7 @@ define('C_WORLDPAY_BG_RESPONSE_URL_TOKEN', 'MC_callback');
  *
  * Defines what post fields should be used in the Worldpay MD5 signature.
  *
- * TODO Decide if this is worth making configurable.
+ * @todo Decide if this is worth making configurable.
  * @see http://www.worldpay.com/support/kb/bg/htmlredirect/rhtml5802.html
  *
  * @return array
@@ -337,7 +337,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     '#type' => 'checkbox',
     '#title' => t('Show the contact details on the payment page.'),
     '#default_value' => $settings['payment_parameters']['show_contact'],
-    // TODO Should this be disabled and always true if edit contact is FALSE?
+    // @todo Should this be disabled and always true if edit contact is FALSE?
     // '#disabled' => variable_get('wpbg_show_contact', TRUE),
   );
 
@@ -487,7 +487,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
  *
  * Here we add the card selection stuff if it is enabled.
  *
- * @TODO
+ * @@todo
  * Attach a help box for aiding the user in payment method choice.
  */
 function commerce_worldpay_bg_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
@@ -578,7 +578,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $currency_code = $order_wrapper->commerce_order_total->currency_code->value();
   $amount = $order_wrapper->commerce_order_total->amount->value();
-  // TODO Find out which should really be used for the ammount or are they the same?
+  // @todo Find out which should really be used for the ammount or are they the same?
   // $amount = commerce_line_items_total($order_wrapper->commerce_line_items);
 
   // Ensure a default value for the payment_method setting.
@@ -618,7 +618,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   }
 
   // @todo provide a hook to override address_post in order to give other modules a chance to provide this info from elsewhere.
-  // TODO Look into producing a formatter for addressfield.
+  // @todo Look into producing a formatter for addressfield.
   $address_post = (!empty($address['thoroughfare']) ? $address['thoroughfare'] . "\n" : '') .
     (!empty($address['premise']) ? $address['premise'] . "\n" : '') .
     (!empty($address['sub_premise']) ? $address['sub_premise'] . "\n" : '') .
@@ -655,7 +655,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     'postcode' => $address['postal_code'],
     'countryString' => $country,
     'email' => $order->mail,
-    // TODO make it possible to select a field to be used for the telephone data
+    // @todo make it possible to select a field to be used for the telephone data
     // 'tel' => $profile->field_telephone,
     'MC_orderId' => $order->order_id,
     'lang' => $settings['payment_parameters']['lang'],
@@ -686,7 +686,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     $data['paymentType'] = $order->data['commerce_worldpay_bg']['paymentType'];
   }
 
-  // TODO
+  // @todo
   // Implement support for authValidFrom and authValidTo in order to prevent
   // purchases on limited time offers.
 

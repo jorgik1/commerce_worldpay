@@ -44,7 +44,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       }
     }
 
-    // TODO Is this safe? Can we end up with the wrong payment method from the
+    // @todo Is this safe? Can we end up with the wrong payment method from the
     // Order object?
     if (!$payment_method && !empty($wppr['MC_orderId'])) {
       if ($order = commerce_order_load($wppr['MC_orderId'])) {
@@ -155,7 +155,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Authentication.
-  // TODO Check that the the transId and cartId are part of the same transaction.
+  // @todo Check that the the transId and cartId are part of the same transaction.
   if ($debug_mode && $debug_wppr['skip_auth']) {
     $order->data['payment_redirect_key'] = '123';
   }
@@ -281,10 +281,10 @@ function _commerce_worldpay_bg_payment_response_authenticate($order_wrapper, &$w
     }
   }
 
-  // TODO - Is it worth checking the User agent is the one WorldPay uses which is:
+  // @todo - Is it worth checking the User agent is the one WorldPay uses which is:
   // User-Agent: WJHRO/1.0 (WorldPay Java HTTP Request Object).
 
-  // TODO Reverse DNS lookup on IP address.
+  // @todo Reverse DNS lookup on IP address.
 
   if ($failed_authenticaion) {
     drupal_add_http_header('Status', '403 Forbidden');
@@ -332,7 +332,7 @@ function commerce_worldpay_bg_transaction_process($order, $payment_method, &$wpp
   // Set the transaction's statuses based on the IPN's payment_status.
   $transaction->remote_status = $wppr['transStatus'];
 
-  // TODO - Figure out how best to  set status based on SecureCode authentication.
+  // @todo - Figure out how best to  set status based on SecureCode authentication.
   if (isset($wppr['authentication'])) {
     switch ($wppr['authentication']) {
       case 'ARespH.card.authentication.0':
@@ -364,7 +364,7 @@ function commerce_worldpay_bg_transaction_process($order, $payment_method, &$wpp
     // I don't think we should ever see this status at this point but incase
     // we do...
     case 'C':
-      // TODO - Is this a suitable status?
+      // @todo - Is this a suitable status?
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
       $transaction->message = t('The user canceled the payment.');
       break;
