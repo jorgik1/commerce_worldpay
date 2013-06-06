@@ -594,7 +594,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
   // how the Drupal include files should be loaded?
   require_once DRUPAL_ROOT . '/includes/locale.inc';
   $countries = country_get_list();
-  $country = $countries[$address['country']];
+  $country = !empty($countries[$address['country']]) ? $countries[$address['country']] : '';
 
   // Build the data array that will be translated into hidden form values.
   $data = array();
@@ -644,6 +644,12 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     $extra_data = array();
   }
 
+  if (!empty($GLOBALS['language']->prefix) && drupal_multilingual()) {
+    $http_host = $_SERVER['HTTP_HOST'] . '/' . !empty($GLOBALS['language']->prefix);
+  }
+  else {
+    $http_host = $_SERVER['HTTP_HOST'];
+  }
   // @todo wouldn't it be easier to add those values to $data and then do a drupal_alter?
   $data += array_replace($extra_data, array(
     'instId' => $settings['installation_id'],
@@ -659,7 +665,7 @@ function commerce_worldpay_bg_order_form($form, &$form_state, $order, $settings)
     // 'tel' => $profile->field_telephone,
     'MC_orderId' => $order->order_id,
     'lang' => $settings['payment_parameters']['lang'],
-    'M_http_host' => $_SERVER['HTTP_HOST'],
+    'M_http_host' => $http_host,
     // @see http://www.worldpay.com/support/kb/bg/htmlredirect/rhtml.html
     'signatureFields' => join(':', _commerce_worldpay_bg_md5_signature_fields()),
     'signature' => commerce_worldpay_bg_build_md5(
