@@ -55,7 +55,7 @@
     </tbody>
   </table>
   <?php if (!$settings['theme_debug']): ?>
-  <WPDISPLAY ITEM=banner>
+    <WPDISPLAY ITEM=banner>
   <?php else: ?>
   <table border="0" cellpadding="0" cellspacing="0" class="bannercontainer">
   <tbody>
@@ -63,10 +63,13 @@
     <td>
       <table cellpadding="2" cellspacing="0" class="banner">
         <tbody>
-          <tr valign="top">
-            <td class="bannererror">
-              <span><?php print t('This was NOT a live transaction - no money has changed hands'); ?></span></td>
-            </tr>
+            <?php if (!$settings['theme_debug']): ?>
+              <tr valign="top">
+                <td class="bannererror">
+                  <span><?php print t('This was NOT a live transaction - no money has changed hands'); ?></span>
+                </td>
+              </tr>
+            <?php endif; ?>
             <tr valign="top">
               <td class="banner">
                 <span><?php print t('Thank you, your payment was successful'); ?></span><br>
@@ -81,7 +84,6 @@
   </tbody>
   </table>
   <?php endif; ?>
-  
   <p id="return-url">
     <?php print l(t('Finish your order'), $return_url, array('absolute' => TRUE)); ?>
   </p>
