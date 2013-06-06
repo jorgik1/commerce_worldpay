@@ -187,7 +187,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
         <li><strong>Payment Response enabled?</strong> must be <em>enabled</em></li>
         <li><strong>Enable the Shopper Response</strong> should be <em>enabled</em> to get the Commerce response page.</li>
         <li><strong>Enable the Dynamic Shopper Response</strong> and set the value to be <em>MC_callback</em>. !link.</li>
-        <li>SignatureFields must be set to: <em>@sig</em></li>
+        <li><strong>SignatureFields must be set to</strong>: <em>@sig</em></li>
       </ul>',
       array(
         '@response_url' => '<wpdisplay item=' . C_WORLDPAY_BG_RESPONSE_URL_TOKEN . '-ppe empty="' .
