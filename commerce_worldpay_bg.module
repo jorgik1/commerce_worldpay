@@ -262,8 +262,8 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     '#type' => 'radios',
     '#title' => t('Payment Response/Notificaton logging'),
     '#options' => array(
-      'notification' => t('Log notifications during WorldPay Pyament Notifications validation and processing.'),
-      'full_wppr' => t('Log notifications with the full WorldPay Pyament Notifications during validation and processing (used for debugging).'),
+      'notification' => t('Log notifications during WorldPay Payment Notifications validation and processing.'),
+      'full_wppr' => t('Log notifications with the full WorldPay Payment Notifications during validation and processing (used for debugging).'),
     ),
     '#default_value' => $settings['payment_response_logging'],
   );
@@ -574,7 +574,7 @@ function commerce_worldpay_bg_submit_form_validate($payment_method, $pane_form, 
   }
   // Check if it is a value we allow
   if (!array_key_exists($pane_values['paymentType'], _commerce_worldpay_bg_payment_card_types())) {
-    form_set_error(implode('][', array_merge($form_parents, array('paymentType'))), t('An invalid WorldPay payment method choice was recived. Please try choosing a payment method again.'));
+    form_set_error(implode('][', array_merge($form_parents, array('paymentType'))), t('An invalid WorldPay payment method choice was received. Please try choosing a payment method again.'));
 
     // Even though the form error is enough to stop the submission of the form,
     // it's not enough to stop it from a Commerce standpoint because of the
