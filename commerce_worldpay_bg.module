@@ -491,7 +491,7 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
  *
  * Here we add the card selection stuff if it is enabled.
  *
- * @@todo
+ * @todo
  * Attach a help box for aiding the user in payment method choice.
  */
 function commerce_worldpay_bg_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
