@@ -51,6 +51,6 @@
     </tbody>
   </table>
   <p>
-    <?php print l(t('Return to') . ' ' . $site_name, $return_url, array('absolute' => TRUE)); ?>
+    <?php print l(t('Return to') . ' ' . $site_name, $return_url); ?>
   </p>
 </header>
