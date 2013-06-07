@@ -177,6 +177,11 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
     ),
   );
 
+  $url = url('commerce/worldpay/bg/response', array());
+  // Remove language prefixes.
+  if (!empty($GLOBALS['language']->prefix) && drupal_multilingual()) {
+    $url = str_replace('/' . $GLOBALS['language']->prefix, '', $url);
+  }
   $form['help_text']['worldpay_settings'] = array(
     '#type' => 'item',
     '#markup' => t(
@@ -186,12 +191,11 @@ function commerce_worldpay_bg_settings_form($settings = NULL) {
         <li><strong>Payment Response URL</strong> must be set to: <em>@response_url</em></li>
         <li><strong>Payment Response enabled?</strong> must be <em>enabled</em></li>
         <li><strong>Enable the Shopper Response</strong> should be <em>enabled</em> to get the Commerce response page.</li>
-        <li><strong>Enable the Dynamic Shopper Response</strong> and set the value to be <em>MC_callback</em>. !link.</li>
+        <li><strong>Shopper Redirect URL</strong> and set the value to be <em>MC_callback</em>. !link.</li>
         <li><strong>SignatureFields must be set to</strong>: <em>@sig</em></li>
       </ul>',
       array(
-        '@response_url' => '<wpdisplay item=' . C_WORLDPAY_BG_RESPONSE_URL_TOKEN . '-ppe empty="' .
-          url('commerce/worldpay/bg/response', array()) . '">',
+        '@response_url' => '<wpdisplay item=' . C_WORLDPAY_BG_RESPONSE_URL_TOKEN . '-ppe empty="' . $url . '">',
         '@sig' => join(':', _commerce_worldpay_bg_md5_signature_fields()),
         '!link' => l(t('Worldpay help document'), 'http://www.worldpay.com/support/kb/bg/paymentresponse/pr5502.html', array('absolute' => TRUE, 'external' => TRUE)),
       )
