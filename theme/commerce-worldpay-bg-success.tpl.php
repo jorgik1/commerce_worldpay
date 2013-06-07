@@ -34,6 +34,8 @@
  *
  * @see template_preprocess_commerce_worldpay_bg_success()
  * @todo find a way to print the merchant id under the transaction id:
+ * <span><?php print t('Merchant\'s Reference:'); ?>&nbsp;</span>
+ * <span><b><?php print $merchant_id ?></b></span><br>
  */
 ?>
 <header>

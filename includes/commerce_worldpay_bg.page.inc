@@ -86,21 +86,18 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
     // WorldPay Payment Response.
     $wppr = $_POST;
 
-    $ip = ip_address();
-
     if (empty($wppr['transId']) && $wppr['transStatus'] != 'C') {
       if ($full_log) {
         watchdog(
           'commerce_worldpay_bg',
-          'Request with no transId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.',
+          'Request with no transId was sent from <em>@ip</em> with request method <b>@method</b>.',
           array(
-            '@ip' => !empty($ip) ? $ip : '0.0.0.0',
+            '@ip' => ip_address(),
             '@method' => !empty($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
-            '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN',
           ),
           WATCHDOG_NOTICE);
-        return;
       }
+      return;
     }
 
     if (empty($wppr['MC_orderId'])) {
@@ -108,15 +105,14 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       if ($full_log) {
         watchdog(
           'commerce_worldpay_bg',
-          'Request with no MC_orderId was sent from <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.',
+          'Request with no MC_orderId was sent from <em>@ip</em> with request method <b>@method</b>.',
           array(
-            '@ip' => !empty($ip) ? $ip : '0.0.0.0',
+            '@ip' => ip_address(),
             '@method' => !empty($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
-            '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN',
           ),
           WATCHDOG_NOTICE);
-        return;
       }
+      return;
     }
   }
 
