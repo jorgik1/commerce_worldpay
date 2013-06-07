@@ -10,6 +10,11 @@
  * http://[drupal_base]/commerce_worldpay/bg/response/debug_me?cartId=[valid_cart_id]
  */
 
+/**
+ * @todo add description
+ *
+ * @param array $variables
+ */
 function _template_common_variables_worldpay_bg(&$variables) {
   if (empty($variables['settings']['site_id'])) {
     $variables['site_id'] = '';
@@ -17,9 +22,7 @@ function _template_common_variables_worldpay_bg(&$variables) {
   else {
     $variables['site_id'] = $variables['settings']['site_id'];
   }
-  
   $variables['site_name'] = variable_get('site_name', 'Drupal');
-  
 }
 
 /**
@@ -34,7 +37,7 @@ function template_preprocess_commerce_worldpay_bg_html(&$variables) {
   $variables['grddl_profile']     = 'http://www.w3.org/1999/xhtml/vocab';
   $variables['language']          = $GLOBALS['language'];
   $variables['language']->dir     = $GLOBALS['language']->direction ? 'rtl' : 'ltr';
-  
+
   _template_common_variables_worldpay_bg($variables);
 
   if (drupal_get_title()) {
@@ -45,9 +48,7 @@ function template_preprocess_commerce_worldpay_bg_html(&$variables) {
   }
 
   $variables['title'] = variable_get('site_name', 'Drupal Commerce') . ' WorldPay payment';
-  
   $variables['body_attributes_array'] = array();
-  
   if (!empty($variables['settings']['site_id'])) {
     $variables['body_attributes_array']['class'] = 'css-' . drupal_clean_css_identifier($variables['settings']['site_id']);
   }
@@ -77,7 +78,9 @@ function template_preprocess_commerce_worldpay_bg_success(&$variables) {
   _template_common_variables_worldpay_bg($variables);
 
   $url_options = array();
-  if ($variables['settings']['payment_urls']['force_non_ssl_links']) $url_options['https'] = FALSE;
+  if ($variables['settings']['payment_urls']['force_non_ssl_links']) {
+    $url_options['https'] = FALSE;
+  }
 
   $variables['return_url'] = url(
     'checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'],
@@ -93,7 +96,9 @@ function template_preprocess_commerce_worldpay_bg_cancel(&$variables) {
   _template_common_variables_worldpay_bg($variables);
 
   $url_options = array();
-  if ($variables['settings']['payment_urls']['force_non_ssl_links']) $url_options['https'] = FALSE;
+  if ($variables['settings']['payment_urls']['force_non_ssl_links']) {
+    $url_options['https'] = FALSE;
+  }
   // Return to the previous page when payment is canceled.
   $variables['return_url'] = url(
     'checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'],

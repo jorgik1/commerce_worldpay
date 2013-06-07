@@ -25,9 +25,8 @@ require_once drupal_get_path('module', 'commerce_worldpay_bg') . '/includes/comm
  *  response page, or 'C' for choosing the cancel page.
  */
 function commerce_worldpay_bg_debug_response_page($payment_method = NULL) {
-  if (!$payment_method) {
-    if (!isset($_GET['skip_pm']))
-      $payment_method = commerce_payment_method_instance_load('commerce_worldpay_bg|commerce_payment_commerce_worldpay_bg');
+  if (!$payment_method && !isset($_GET['skip_pm'])) {
+    $payment_method = commerce_payment_method_instance_load('commerce_worldpay_bg|commerce_payment_commerce_worldpay_bg');
   }
   $order_id = isset($_GET['cartId']) ? (int) $_GET['cartId'] : 1;
   $trans_id = isset($_GET['transId']) ? (int) $_GET['transId'] : 1;
@@ -56,9 +55,7 @@ function commerce_worldpay_bg_debug_response_page($payment_method = NULL) {
     'amount' => '35.45',
     'wafMerchMessage' => 'waf.warning',
     'countryString' => 'United Kingdom',
-    'displayAddress' => '64 Langham Way
-Ivybridge
-Devon',
+    'displayAddress' => "64 Langham Way\nIvybridge\nDevon",
     'transTime' => '1328622427346',
     'name' => 'AUTHORISED',
     'testMode' => '100',
@@ -78,9 +75,7 @@ Devon',
     'country' => 'GB',
     'charenc' => 'UTF-8',
     'email' => 'adam@studiospaceone.com',
-    'address' => '64 Langham Way
-Ivybridge
-Devon',
+    'address' => "64 Langham Way\nIvybridge\nDevon",
     'transId' => $trans_id,
     'msgType' => 'authResult',
     'town' => '',

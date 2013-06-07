@@ -59,7 +59,8 @@ function commerce_worldpay_bg_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      // transStatus - 'pre' is our own status meaning that no comunication has happended with wolrdpay yet.
+      // transStatus - 'pre' is our own status meaning that
+      // no comunication has happended with wolrdpay yet.
       'transaction_status' => array(
         'description' => 'The status set by Worldpay (Y or C).',
         'type' => 'varchar',

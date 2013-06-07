@@ -34,7 +34,6 @@
  *
  * @see template_preprocess_commerce_worldpay_bg_success()
  * @todo find a way to print the merchant id under the transaction id:
- * <span><?php print t('Merchant\'s Reference:'); ?>&nbsp;</span><span><b></b></span><br>
  */
 ?>
 <header>
@@ -72,9 +71,9 @@
             <?php endif; ?>
             <tr valign="top">
               <td class="banner">
-                <span><?php print t('Thank you, your payment was successful'); ?></span><br>
+                <span><?php print t('Thank you, your payment was successful'); ?></span><br />
                 <span><?php print t('WorldPay Transaction ID:'); ?>&nbsp;</span>
-                <span><b><?php print $wp_txn_id; ?></b></span><br>
+                <span><b><?php print $wp_txn_id; ?></b></span><br />
               </td>
             </tr>
         </tbody>

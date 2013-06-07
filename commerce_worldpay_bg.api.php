@@ -24,12 +24,12 @@
  * know enough about Rule's internals and I need to be able to this stuff
  * now ;)
  *
- * @param $order
+ * @param object $order
  *   The order that initiated the payment associated with the WorldPay
  *   transaction.
- * @param $profile
+ * @param object $profile
  *   The fully loaded profile assigned to this order.
- * @param $settings
+ * @param array $settings
  *   The payment methods settings.
  *
  * @return array

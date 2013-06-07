@@ -59,7 +59,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
     }
   }
 
-  // Make sure we have a payment method we handle
+  // Make sure we have a payment method we handle.
   if ($payment_method) {
     if ($payment_method['method_id'] != 'commerce_worldpay_bg') {
       print '';
@@ -83,7 +83,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
 
   if (empty($debug_wppr)) {
     $debug_mode = FALSE;
-    // WorldPay Payment Response
+    // WorldPay Payment Response.
     $wppr = $_POST;
 
     $ip = ip_address();
@@ -112,7 +112,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
           array(
             '@ip' => !empty($ip) ? $ip : '0.0.0.0',
             '@method' => !empty($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
-            '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN'
+            '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN',
           ),
           WATCHDOG_NOTICE);
         return;
@@ -155,7 +155,8 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Authentication.
-  // @todo Check that the the transId and cartId are part of the same transaction.
+  // @todo Check that the the transId and cartId are part of the same
+  //   transaction.
   if ($debug_mode && $debug_wppr['skip_auth']) {
     $order->data['payment_redirect_key'] = '123';
   }
@@ -190,7 +191,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
       $theme_data['settings']['context'] = 'result_success';
       if ($debug_mode && $debug_wppr['skip_save']) {
         $order->data['payment_redirect_key'] = '123';
-        // Write a message
+        // Write a message.
       }
       elseif (!$skip_process) {
         // Create or re-establish a Commerce Transaction.
@@ -199,7 +200,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
         $tx_data = commerce_worldpay_bg_convert_wppr_to_record($wppr);
         $tx_data['transaction_id'] = $wppr['transaction_id'];
         $tx_data['order_id'] = $order->order_id;
-        $tx_data['signature_fields'] = join(':', _commerce_worldpay_bg_md5_signature_fields());
+        $tx_data['signature_fields'] = implode(':', _commerce_worldpay_bg_md5_signature_fields());
         if ($prior_wppr) {
           $tx_data = array_replace($prior_wppr, $tx_data);
         }
@@ -228,8 +229,8 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
     case 'C':
       $theme_data['settings']['context'] = 'result_cancel';
       if ($prior_wppr) {
-        // Don't know if WorldPay ever changes transStatus after its been set
-        // the first time but if it does we update our transaction info
+        // Don't know if WorldPay ever changes transStatus after it's been set
+        // the first time, but if it does we update our transaction info.
         $tx_data = commerce_worldpay_bg_convert_wppr_to_record($wppr);
         $tx_data = array_replace($prior_wppr, $tx_data);
         commerce_worldpay_bg_txn_save($tx_data);
@@ -240,9 +241,9 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
 
       if (!empty($payment_method) and !empty($payment_method['settings']['debug'])) {
         watchdog(
-          'commerce_worldpay_bg', 'Creating cancel HTML for transaction @wp_txn_id.', 
+          'commerce_worldpay_bg', 'Creating cancel HTML for transaction @wp_txn_id.',
           array(
-            '@wp_txn_id' => $wppr['transId']
+            '@wp_txn_id' => $wppr['transId'],
           ),
           WATCHDOG_NOTICE);
       }
@@ -256,7 +257,7 @@ function commerce_worldpay_bg_response_page($payment_method = NULL, $debug_wppr 
 }
 
 /**
- * Generates the theme output
+ * Generates the theme output.
  */
 function _commerce_worldpay_bg_build_page($theme_data, $type = 'success') {
   drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
@@ -281,18 +282,17 @@ function _commerce_worldpay_bg_payment_response_authenticate($order_wrapper, &$w
     }
   }
 
-  // @todo - Is it worth checking the User agent is the one WorldPay uses which is:
-  // User-Agent: WJHRO/1.0 (WorldPay Java HTTP Request Object).
-
+  // @todo - Is it worth checking the User agent is the one WorldPay uses
+  //   which is: User-Agent: WJHRO/1.0 (WorldPay Java HTTP Request Object).
   // @todo Reverse DNS lookup on IP address.
-
   if ($failed_authenticaion) {
     drupal_add_http_header('Status', '403 Forbidden');
-    watchdog('commerce_worldpay_bg', 'Access denied! ' . $message . ' Clients details: <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.', 
+    $ip = ip_address();
+    watchdog('commerce_worldpay_bg', 'Access denied! ' . $message . ' Clients details: <em>@ip</em> with request method <b>@method</b>. Refered by: <b>@referer</b>.',
       array(
-        '@ip' => !empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0',
+        '@ip' => !empty($ip) ? $ip : '0.0.0.0',
         '@method' => !empty($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
-        '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN'
+        '@referer' => !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'UNKNOWN',
       ), WATCHDOG_WARNING);
     return FALSE;
   }
@@ -310,8 +310,8 @@ function commerce_worldpay_bg_transaction_process($order, $payment_method, &$wpp
     return FALSE;
   }
 
-  // If this is a prior authorization capture WorldPay Payment Response for which we've already
-  // created a transaction...
+  // If this is a prior authorization capture WorldPay Payment Response for
+  // which we've already created a transaction...
   if ($prior_wppr) {
     // Load the prior IPN's transaction and update that with the capture values.
     $transaction = commerce_payment_transaction_load($prior_wppr['transaction_id']);
@@ -326,13 +326,14 @@ function commerce_worldpay_bg_transaction_process($order, $payment_method, &$wpp
   $transaction->amount = commerce_currency_decimal_to_amount($wppr['authAmount'], $wppr['authCurrency']);
   $transaction->currency_code = $wppr['authCurrency'];
   $transaction->payload[REQUEST_TIME] = $wppr;
-  // Remove sensitive data
+  // Remove sensitive data.
   unset($transaction->payload[REQUEST_TIME]['callbackPW']);
 
   // Set the transaction's statuses based on the IPN's payment_status.
   $transaction->remote_status = $wppr['transStatus'];
 
-  // @todo - Figure out how best to  set status based on SecureCode authentication.
+  // @todo - Figure out how best to  set status based on SecureCode
+  //   authentication.
   if (isset($wppr['authentication'])) {
     switch ($wppr['authentication']) {
       case 'ARespH.card.authentication.0':
@@ -358,7 +359,7 @@ function commerce_worldpay_bg_transaction_process($order, $payment_method, &$wpp
   switch ($wppr['transStatus']) {
     case 'Y':
       $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-      $transaction->message = t('WorldPay excepted the user\'s transaction.');
+      $transaction->message = t("WorldPay excepted the user's transaction.");
       break;
 
     // I don't think we should ever see this status at this point but incase
