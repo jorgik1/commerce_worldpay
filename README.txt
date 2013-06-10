@@ -93,13 +93,15 @@ SUPPORT
 -------
 
 If you encounter any issues, please file a support request
-at http://drupal.org/project/issues/commerce_worldpay_bg
+at http://drupal.org/project/issues/commerce_worldpay
 
 
 SPONSORSHIP
 -----------
 
 This module was originally developed for Zixiao (http://www.zixiao.co.uk).
+
+The module is maintained by MD Systems (http://www.md-systems.ch/)
 
 ACKNOWLEDGEMENTS/CREDITS
 ------------------------
