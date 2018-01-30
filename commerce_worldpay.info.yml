@@ -1,7 +1,7 @@
 name: WorldPay Business Gateway Integration
-description:Provides Integration with the WorldPay Payment Gateway (http://www.worldpay.com)
-package: Commerce (contrib)
-dependencies:
-  - commerce
+description: Provides Integration with the WorldPay Payment Gateway (http://www.worldpay.com)
 core: 8.x
 type: module
+package: Commerce (contrib)
+dependencies:
+  - commerce:commerce_payment
