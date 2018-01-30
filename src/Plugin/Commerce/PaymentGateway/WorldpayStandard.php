@@ -16,7 +16,7 @@ use Drupal\Core\Form\FormStateInterface;
  *  forms = {
  *    "worldpay-standard" = "Drupal\commerce_worldpay\PluginForm\Standard\WorldpayStandardForm",
  *  },
- *  payment_method_types = {"credit card"},
+ *  payment_method_types = {"credit_card"},
  *  credit_card_types = {
  *     "amex", "maestro", "mastercard", "visa"
  *  },
@@ -66,6 +66,13 @@ class WorldpayStandard extends OffsitePaymentGatewayBase {
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     parent::validateConfigurationForm($form, $form_state);
+
+    if (!$form_state->getErrors() && $form_state->isSubmitted()) {
+      $values = $form_state->getValue($form['#parents']);
+      $this->configuration['merchant_id'] = $values['merchant_id'];
+      $this->configuration['service_key'] = $values['service_key'];
+      $this->configuration['client_key'] = $values['client_key'];
+    }
   }
 
   /**
@@ -73,6 +80,12 @@ class WorldpayStandard extends OffsitePaymentGatewayBase {
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     parent::submitConfigurationForm($form, $form_state);
+    if (!$form_state->getErrors()) {
+      $values = $form_state->getValue($form['#parents']);
+      $this->configuration['merchant_id'] = $values['merchant_id'];
+      $this->configuration['service_key'] = $values['service_key'];
+      $this->configuration['client_key'] = $values['client_key'];m
+    }
   }
 
 
