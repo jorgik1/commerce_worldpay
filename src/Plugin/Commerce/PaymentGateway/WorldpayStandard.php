@@ -1,0 +1,79 @@
+<?php
+
+namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
+
+use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
+use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Provides standard payment.
+ *
+ * @CommercePaymentGateway(
+ *  id = "commerce_worldpay_standard",
+ *  label = "Worldpay (Standard)",
+ *  display_label = "Worldpay standard (offsite)",
+ *  forms = {
+ *    "worldpay-standard" = "Drupal\commerce_worldpay\PluginForm\Standard\WorldpayStandardForm",
+ *  },
+ *  payment_method_types = {"credit card"},
+ *  credit_card_types = {
+ *     "amex", "maestro", "mastercard", "visa"
+ *  },
+ * )
+ */
+class WorldpayStandard extends OffsitePaymentGatewayBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    return [
+        'merchant_id' => '',
+        'service_key' => '',
+        'client_key' => '',
+      ] + parent::defaultConfiguration();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildConfigurationForm($form, $form_state);
+
+    $form['merchant_id'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Merchant ID'),
+      '#required' => TRUE,
+      '#default_value' => '',
+    ];
+    $form['service_key'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Service Key'),
+      '#required' => TRUE,
+      '#default_value' => '',
+    ];
+    $form['client_key'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Client Key'),
+      '#required' => TRUE,
+      '#default_value' => '',
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
+    parent::validateConfigurationForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+    parent::submitConfigurationForm($form, $form_state);
+  }
+
+
+}
