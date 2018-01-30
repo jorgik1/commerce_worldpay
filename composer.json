@@ -1,0 +1,6 @@
+{
+    "name": "drupal/commerce_worldpay",
+    "require": {
+        "worldpay/worldpay-lib-php": "^2.1"
+    }
+}
