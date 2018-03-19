@@ -7,14 +7,14 @@ use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteF
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Provides the Worldpay Redirect payment gateway.
+ * Provides the Worldpay direct payment gateway.
  *
  * @CommercePaymentGateway(
- *   id = "worldpay_redirect",
- *   label = @Translation("Worldpay (Redirect)"),
+ *   id = "worldpay_direct",
+ *   label = @Translation("Worldpay (Direct)"),
  *   display_label = @Translation("Worldpay"),
  *    forms = {
- *     "offsite-payment" = "Drupal\commerce_worldpay\PluginForm\WorldpayRedirectForm",
+ *     "onsite-payment" = "Drupal\commerce_worldpay\PluginForm\WorldpayDirectForm",
  *   },
  *   payment_method_types = {"credit_card"},
  *   credit_card_types = {
@@ -22,7 +22,7 @@ use Drupal\Core\Form\FormStateInterface;
  *   },
  * )
  */
-class WorldpayRedirect extends OffsitePaymentGatewayBase {
+class WorldpayDirect extends OffsitePaymentGatewayBase {
   /**
    * {@inheritdoc}
    */
