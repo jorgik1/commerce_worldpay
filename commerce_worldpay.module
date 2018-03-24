@@ -1,5 +1,25 @@
 <?php
 
+define('WORLDPAY_BG_SERVER_TEST', 'Test');
+define('WORLDPAY_BG_SERVER_LIVE', 'Live');
+
+define('C_WORLDPAY_BG_TXN_MODE_LIVE', 'live');
+define('C_WORLDPAY_BG_TXN_MODE_TEST', 'live_test');
+// define('WORLDPAY_TXN_MODE_SIMULATION', 'developer');
+
+// Default URLs for WorldPay transaction.
+define(
+  'C_WORLDPAY_BG_DEF_SERVER_LIVE',
+  'https://secure.wp3.rbsworldpay.com/wcc/purchase'
+);
+define(
+  'C_WORLDPAY_BG_DEF_SERVER_TEST',
+  'https://secure-test.worldpay.com/wcc/purchase'
+);
+
+// This is WorldPay custom variable name, used to hold the repsone URL.
+define('C_WORLDPAY_BG_RESPONSE_URL_TOKEN', 'MC_callback');
+
 /**
  * @file
  * Provides a Worldpay Business Gateway payment method for Drupal Commerce.

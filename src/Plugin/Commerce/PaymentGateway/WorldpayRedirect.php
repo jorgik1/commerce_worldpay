@@ -8,26 +8,6 @@ use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteF
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Form\FormStateInterface;
 
-define('WORLDPAY_BG_SERVER_TEST', 'Test');
-define('WORLDPAY_BG_SERVER_LIVE', 'Live');
-
-define('C_WORLDPAY_BG_TXN_MODE_LIVE', 'live');
-define('C_WORLDPAY_BG_TXN_MODE_TEST', 'live_test');
-// define('WORLDPAY_TXN_MODE_SIMULATION', 'developer');
-
-// Default URLs for WorldPay transaction.
-define(
-  'C_WORLDPAY_BG_DEF_SERVER_LIVE',
-  'https://secure.wp3.rbsworldpay.com/wcc/purchase'
-);
-define(
-  'C_WORLDPAY_BG_DEF_SERVER_TEST',
-  'https://secure-test.worldpay.com/wcc/purchase'
-);
-
-// This is WorldPay custom variable name, used to hold the repsone URL.
-define('C_WORLDPAY_BG_RESPONSE_URL_TOKEN', 'MC_callback');
-
 /**
  * Provides the Worldpay Redirect payment gateway.
  *
@@ -54,9 +34,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    */
   public function defaultConfiguration() {
     return [
-        'merchant_id' => '',
-        'service_key' => '',
-        'client_key' => '',
         'installation_id' => '',
         'txn_mode' => C_WORLDPAY_BG_DEF_SERVER_TEST,
         'txn_type' => '',
@@ -86,26 +63,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
-
-    $form['merchant_id'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Merchant ID'),
-      '#required' => TRUE,
-      '#default_value' => $this->configuration['merchant_id'],
-    ];
-    $form['service_key'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Service Key'),
-      '#required' => TRUE,
-      '#default_value' => $this->configuration['service_key'],
-    ];
-    $form['client_key'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Client Key'),
-      '#required' => TRUE,
-      '#default_value' => $this->configuration['client_key'],
-    ];
-
 
     $form['installation_id'] = [
       '#type' => 'textfield',
@@ -164,19 +121,10 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#collapsed' => TRUE,
     ];
 
-    $form['payment_parameters']['pm_select_localy'] = [
-      '#type' => 'checkbox',
-      '#title' => t('Select payment method locally'),
-      '#default_value' => $this->configuration['pm_select_localy'],
-      '#description' => t(
-        'When checked the payment methods will be chosen on this website instead of on WorldPay\'s server.'
-      ),
-    ];
-
     $form['payment_parameters']['test_mode'] = [
       '#type' => 'checkbox',
       '#title' => t('Enable test mode'),
-      '#default_value' => $this->configuration['test_mode'],
+      '#default_value' => $this->configuration['payment_parameters']['test_mode'],
     ];
 
     $form['payment_parameters']['test_result'] = [
@@ -185,14 +133,14 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#description' => t(
         'Specify the required transaction result when working in test mode.'
       ),
-      '#default_value' => $this->configuration['test_result'],
+      '#default_value' => $this->configuration['payment_parameters']['test_result'],
       '#options' => [
         'AUTHORISED' => 'Authorised',
         'REFUSED' => 'Refused',
         'ERROR' => 'Error',
         'CAPTURED' => 'Captured',
       ],
-      '#disabled' => (!$this->configuration['test_mode']) ? TRUE : FALSE,
+      '#disabled' => (!$this->configuration['payment_parameters']['test_mode']) ? TRUE : FALSE,
     ];
 
 
@@ -212,7 +160,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#description' => t(
         'It is recomended that you set a password in your Worldpay Merchant Interface > Installation. Once done check this and enter the password.'
       ),
-      '#default_value' => $this->configuration['use_password'],
+      '#default_value' => $this->configuration['payment_security']['use_password'],
     ];
 
     $form['payment_security']['password'] = [
@@ -223,7 +171,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       ),
       '#size' => 16,
       '#maxlength' => 16,
-      '#default_value' => $this->configuration['password'],
+      '#default_value' => $this->configuration['payment_security']['password'],
     ];
 
     $form['payment_security']['md5_salt'] = [
@@ -232,7 +180,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#description' => t('This is the key used to hash some of the content for verification between Worldpay and this site".'),
       '#size' => 16,
       '#maxlength' => 16,
-      '#default_value' => $this->configuration['md5_salt'],
+      '#default_value' => $this->configuration['payment_security']['md5_salt'],
       '#required' => TRUE,
     ];
 
@@ -247,7 +195,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#type' => 'textfield',
       '#title' => t('Test URL'),
       '#description' => t('The WorldPay test environment URL.'),
-      '#default_value' => $this->configuration['test'],
+      '#default_value' => $this->configuration['payment_urls']['test'],
       '#required' => TRUE,
     ];
 
@@ -255,7 +203,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#type' => 'textfield',
       '#title' => t('Live URL'),
       '#description' => t('The WorldPay live environment URL.'),
-      '#default_value' => $this->configuration['live'],
+      '#default_value' => $this->configuration['payment_urls']['live'],
       '#required' => TRUE,
     ];
 
@@ -265,7 +213,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#description' => t(
         'If checked, when WorldPay passes information, it will be done over SSL for greater security. Use in combination with callback password to prevent spoofing.'
       ),
-      '#default_value' => $this->configuration['use_ssl'],
+      '#default_value' => $this->configuration['payment_urls']['use_ssl'],
     ];
 
     $form['payment_urls']['force_non_ssl_links'] = [
@@ -274,7 +222,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#description' => t(
         'This is needed if "Use SSL" is checked and you want your buyers to return to the non-ssl site.'
       ),
-      '#default_value' => $this->configuration['force_non_ssl_links'],
+      '#default_value' => $this->configuration['payment_urls']['force_non_ssl_links'],
     ];
 
 
@@ -286,30 +234,12 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     parent::validateConfigurationForm($form, $form_state);
-    if(!UrlHelper::isValid($form_state->getValue('live'))) {
+    if(!UrlHelper::isValid($form_state->getValue($form['#parents'])['payment_urls']['live'])) {
       $form_state->setErrorByName('live', $this->t(
         'The URL @url for @title is invalid. Enter a fully-qualified URL, such as https://secure.worldpay.com/example.',
         ['@url' => $form['#value'], '@title' => $form['#title']]
         )
       );
-    }
-    if (!$form_state->getErrors() && $form_state->isSubmitted()) {
-      $values = $form_state->getValue($form['#parents']);
-      $this->configuration['merchant_id'] = $values['merchant_id'];
-      $this->configuration['service_key'] = $values['service_key'];
-      $this->configuration['client_key'] = $values['client_key'];
-
-      $this->configuration['installation_id'] = $values['installation_id'];
-      $this->configuration['debug'] = $values['debug'];
-      $this->configuration['site_id'] = $values['site_id'];
-      $this->configuration['test_mode'] = $values['test_mode'];
-      $this->configuration['password'] = $values['password'];
-      $this->configuration['md5_salt'] = $values['md5_salt'];
-      $this->configuration['live'] = $values['live'];
-      $this->configuration['test'] = $values['test'];
-      $this->configuration['use_ssl'] = $values['use_ssl'];
-      $this->configuration['force_non_ssl_links'] = $values['force_non_ssl_links'];
-
     }
   }
 
@@ -320,9 +250,18 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     parent::submitConfigurationForm($form, $form_state);
     if (!$form_state->getErrors()) {
       $values = $form_state->getValue($form['#parents']);
-      $this->configuration['merchant_id'] = $values['merchant_id'];
-      $this->configuration['service_key'] = $values['service_key'];
-      $this->configuration['client_key'] = $values['client_key'];
+      $this->configuration['installation_id'] = $values['installation_id'];
+      $this->configuration['debug'] = $values['debug'];
+      $this->configuration['site_id'] = $values['site_id'];
+      $this->configuration['payment_parameters']['test_mode'] = $values['payment_parameters']['test_mode'];
+      $this->configuration['payment_parameters']['test_result'] = $values['payment_parameters']['test_result'];
+      $this->configuration['payment_parameters']['pm_select_localy'] = $values['payment_parameters']['pm_select_localy'];
+      $this->configuration['payment_security']['password'] = $values['payment_security']['password'];
+      $this->configuration['payment_security']['md5_salt'] = $values['payment_security']['md5_salt'];
+      $this->configuration['payment_urls']['live'] = $values['payment_urls']['live'];
+      $this->configuration['payment_urls']['test'] = $values['payment_urls']['test'];
+      $this->configuration['payment_urls']['use_ssl'] = $values['payment_urls']['use_ssl'];
+      $this->configuration['payment_urls']['force_non_ssl_links'] = $values['payment_urls']['force_non_ssl_links'];
     }
   }
 
