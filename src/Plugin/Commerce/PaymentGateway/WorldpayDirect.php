@@ -2,7 +2,10 @@
 
 namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
 
+use Drupal\commerce_payment\Entity\PaymentInterface;
+use Drupal\commerce_payment\Entity\PaymentMethodInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
+use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OnsitePaymentGatewayBase;
 use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
 use Drupal\Core\Form\FormStateInterface;
 
@@ -22,7 +25,7 @@ use Drupal\Core\Form\FormStateInterface;
  *   },
  * )
  */
-class WorldpayDirect extends OffsitePaymentGatewayBase {
+class WorldpayDirect extends OnsitePaymentGatewayBase implements WorldpayDirectInterface {
   /**
    * {@inheritdoc}
    */
@@ -90,5 +93,51 @@ class WorldpayDirect extends OffsitePaymentGatewayBase {
   }
 
 
+  /**
+   * Creates a payment.
+   *
+   * @param \Drupal\commerce_payment\Entity\PaymentInterface $payment
+   *   The payment.
+   * @param bool $capture
+   *   Whether the created payment should be captured (VS authorized only).
+   *   Allowed to be FALSE only if the plugin supports authorizations.
+   *
+   * @throws \InvalidArgumentException
+   *   If $capture is FALSE but the plugin does not support authorizations.
+   * @throws \Drupal\commerce_payment\Exception\PaymentGatewayException
+   *   Thrown when the transaction fails for any reason.
+   */
+  public function createPayment(PaymentInterface $payment, $capture = TRUE) {
+    // TODO: Implement createPayment() method.
+  }
 
+  /**
+   * Creates a payment method with the given payment details.
+   *
+   * @param \Drupal\commerce_payment\Entity\PaymentMethodInterface $payment_method
+   *   The payment method.
+   * @param array $payment_details
+   *   The gateway-specific payment details.
+   *
+   * @throws \Drupal\commerce_payment\Exception\PaymentGatewayException
+   *   Thrown when the transaction fails for any reason.
+   */
+  public function createPaymentMethod(PaymentMethodInterface $payment_method, array $payment_details) {
+    // TODO: Implement createPaymentMethod() method.
+  }
+
+  /**
+   * Deletes the given payment method.
+   *
+   * Both the entity and the remote record are deleted.
+   *
+   * @param \Drupal\commerce_payment\Entity\PaymentMethodInterface $payment_method
+   *   The payment method.
+   *
+   * @throws \Drupal\commerce_payment\Exception\PaymentGatewayException
+   *   Thrown when the transaction fails for any reason.
+   */
+  public function deletePaymentMethod(PaymentMethodInterface $payment_method) {
+    // TODO: Implement deletePaymentMethod() method.
+  }
 }

@@ -2,10 +2,31 @@
 
 namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
 
+use Drupal\commerce_payment\Entity\PaymentInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
 use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Form\FormStateInterface;
+
+define('WORLDPAY_BG_SERVER_TEST', 'Test');
+define('WORLDPAY_BG_SERVER_LIVE', 'Live');
+
+define('C_WORLDPAY_BG_TXN_MODE_LIVE', 'live');
+define('C_WORLDPAY_BG_TXN_MODE_TEST', 'live_test');
+// define('WORLDPAY_TXN_MODE_SIMULATION', 'developer');
+
+// Default URLs for WorldPay transaction.
+define(
+  'C_WORLDPAY_BG_DEF_SERVER_LIVE',
+  'https://secure.wp3.rbsworldpay.com/wcc/purchase'
+);
+define(
+  'C_WORLDPAY_BG_DEF_SERVER_TEST',
+  'https://secure-test.worldpay.com/wcc/purchase'
+);
+
+// This is WorldPay custom variable name, used to hold the repsone URL.
+define('C_WORLDPAY_BG_RESPONSE_URL_TOKEN', 'MC_callback');
 
 /**
  * Provides the Worldpay Redirect payment gateway.
@@ -15,24 +36,18 @@ use Drupal\Core\Form\FormStateInterface;
  *   label = @Translation("Worldpay (Redirect)"),
  *   display_label = @Translation("Worldpay"),
  *    forms = {
- *     "offsite-payment" =
- *   "Drupal\commerce_worldpay\PluginForm\WorldpayRedirectForm",
+ *     "offsite-payment" = "Drupal\commerce_worldpay\PluginForm\WorldpayRedirectForm",
  *   },
  *   payment_method_types = {"credit_card"},
  *   credit_card_types = {
  *     "amex", "discover", "mastercard", "visa",
  *   },
  *  modes = {
- *    C_WORLDPAY_BG_DEF_SERVER_TEST = "Test", C_WORLDPAY_BG_DEF_SERVER_LIVE =
- *   "Live",
+ *    WORLDPAY_BG_SERVER_TEST = "Test", WORLDPAY_BG_SERVER_LIVE = "Live",
  *   },
  * )
  */
-class WorldpayRedirect extends OffsitePaymentGatewayBase {
-
-  const C_WORLDPAY_BG_DEF_SERVER_TEST = 'https://secure-test.worldpay.com/wcc/purchase';
-
-  const C_WORLDPAY_BG_DEF_SERVER_LIVE = 'https://secure.wp3.rbsworldpay.com/wcc/purchase';
+class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedirectInterface {
 
   /**
    * {@inheritdoc}
@@ -43,7 +58,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase {
         'service_key' => '',
         'client_key' => '',
         'installation_id' => '',
-        'txn_mode' => self::C_WORLDPAY_BG_DEF_SERVER_TEST,
+        'txn_mode' => C_WORLDPAY_BG_DEF_SERVER_TEST,
         'txn_type' => '',
         'debug' => 'log',
         'payment_response_logging' => 'full_wppr',
@@ -58,8 +73,8 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase {
           'md5_salt' => '',
         ],
         'payment_urls' => [
-          'live' => self::C_WORLDPAY_BG_DEF_SERVER_LIVE,
-          'test' => self::C_WORLDPAY_BG_DEF_SERVER_TEST,
+          'live' => C_WORLDPAY_BG_DEF_SERVER_LIVE,
+          'test' => C_WORLDPAY_BG_DEF_SERVER_TEST,
           'use_ssl' => FALSE,
           'force_non_ssl_links' => FALSE,
         ],
@@ -312,4 +327,16 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase {
   }
 
 
+  /**
+   * Builds the transaction data.
+   *
+   * @param \Drupal\commerce_payment\Entity\PaymentInterface $payment
+   *   The commerce payment object.
+   *
+   * @return array
+   *   Transaction data.
+   */
+  public function buildTransaction(PaymentInterface $payment) {
+    return [];
+  }
 }
