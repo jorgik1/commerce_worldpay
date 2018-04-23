@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: alexburrows
- * Date: 18/03/2018
- * Time: 19:39
- */
 
 namespace Drupal\commerce_worldpay\PluginForm\OffsiteRedirect;
 

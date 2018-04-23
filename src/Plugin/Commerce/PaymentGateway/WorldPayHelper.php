@@ -7,14 +7,35 @@ use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 
+/**
+ * Class WorldPayHelper
+ * Helper class for collecting form data.
+ *
+ * @package Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway
+ */
 class WorldPayHelper {
 
+  /**
+   * @var \Drupal\commerce_order\Entity\OrderInterface
+   */
   private $order;
 
+  /**
+   * @var array
+   */
   private $config;
 
+  /**
+   * @var array
+   */
   private $data = [];
 
+  /**
+   * WorldPayHelper constructor.
+   *
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   * @param $configuration
+   */
   public function __construct(OrderInterface $order, $configuration) {
     $this->order = $order;
     $this->config = $configuration;
