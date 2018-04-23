@@ -4,6 +4,7 @@ namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
 
 use Drupal\commerce_order\Entity\OrderInterface;
 
+use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 
 class WorldPayHelper {
@@ -21,8 +22,14 @@ class WorldPayHelper {
 
   /**
    * @param array $addressData
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function addAddress(array $addressData) {
+    if (NULL === $addressData) {
+      throw new MissingDataException('There is no address data provided!');
+    }
+
     $this->data += [
       'name' => $addressData['first_name'] . ' ' . $addressData['surname'],
       'address' => $addressData['address1'],
