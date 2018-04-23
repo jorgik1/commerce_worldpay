@@ -2,11 +2,23 @@
 
 namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
 
+use Drupal;
+use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\Entity\PaymentInterface;
+use Drupal\commerce_payment\Exception\PaymentGatewayException;
+use Drupal\commerce_payment\PaymentMethodTypeManager;
+use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
-use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\TypedData\Exception\MissingDataException;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Provides the Worldpay Redirect payment gateway.
@@ -16,7 +28,7 @@ use Drupal\Core\Form\FormStateInterface;
  *   label = @Translation("Worldpay (Redirect)"),
  *   display_label = @Translation("Worldpay"),
  *    forms = {
- *     "offsite-payment" = "Drupal\commerce_worldpay\PluginForm\WorldpayRedirectForm",
+ *     "offsite-payment" = "Drupal\commerce_worldpay\PluginForm\OffsiteRedirect\WorldpayRedirectForm",
  *   },
  *   payment_method_types = {"credit_card"},
  *   credit_card_types = {
@@ -28,6 +40,75 @@ use Drupal\Core\Form\FormStateInterface;
  * )
  */
 class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedirectInterface {
+
+  use WorldpayPymentTrait;
+
+  /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  private $requestStack;
+
+  /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  private $loggerChannelFactory;
+
+  /**
+   * The time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $time;
+
+  /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  private $moduleHandler;
+
+  /**
+   * Constructs a new PaymentGatewayBase object.
+   *
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   * @param \Drupal\commerce_payment\PaymentTypeManager $payment_type_manager
+   *   The payment type manager.
+   * @param \Drupal\commerce_payment\PaymentMethodTypeManager $payment_method_type_manager
+   *   The payment method type manager.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
+   *   The request stack.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   The logger factory.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   The module handler service.
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition,
+                              EntityTypeManagerInterface $entity_type_manager,
+                              PaymentTypeManager $payment_type_manager,
+                              PaymentMethodTypeManager $payment_method_type_manager,
+                              RequestStack $requestStack,
+                              LoggerChannelFactoryInterface $loggerChannelFactory,
+                              TimeInterface $time,
+                              ModuleHandlerInterface $moduleHandler) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $payment_type_manager, $payment_method_type_manager, $time);
+    $this->requestStack = $requestStack;
+    $this->loggerChannelFactory = $loggerChannelFactory;
+    $this->time = $time;
+    $this->moduleHandler = $moduleHandler;
+  }
 
   /**
    * {@inheritdoc}
@@ -59,7 +140,30 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
   }
 
   /**
+   * Utility function holding Worldpay MAC sig codes.
+   *
+   * Defines what post fields should be used in the Worldpay MD5 signature.
+   *
+   * @todo Decide if this is worth making configurable.
+   * @see http://www.worldpay.com/support/kb/bg/htmlredirect/rhtml5802.html
+   *
+   * @return array
+   *   An array consisting of the name of fields that will be use.
+   */
+   public static function md5signatureFields() {
+    return [
+      'instId',
+      'amount',
+      'currency',
+      'cartId',
+      'MC_orderId',
+      C_WORLDPAY_BG_RESPONSE_URL_TOKEN,
+    ];
+  }
+
+  /**
    * {@inheritdoc}
+   * @throws \InvalidArgumentException
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
@@ -185,7 +289,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     ];
 
     $form['payment_urls'] = [
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => t('Payment URLs'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
@@ -267,15 +371,159 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
 
   /**
-   * Builds the transaction data.
+   * {@inheritdoc}
    *
-   * @param \Drupal\commerce_payment\Entity\PaymentInterface $payment
-   *   The commerce payment object.
-   *
-   * @return array
-   *   Transaction data.
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function buildTransaction(PaymentInterface $payment) {
-    return [];
+  public function buildFormData(PaymentInterface $payment) {
+    /** @var OrderInterface $order */
+    $order = $payment->getOrder();
+    $worldPayFormApi = $this->getWorldPayApi($order);
+
+    try {
+      $worldPayFormApi->addAddress($this->getBillingAddress($order));
+    }
+    catch (MissingDataException $exception) {
+      $this->loggerChannelFactory->get('commerce_worldpay')->error(
+        $exception->getMessage()
+      );
+      return FALSE;
+    }
+    if ($this->moduleHandler->moduleExists('commerce_shipping')) {
+      /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
+      $shipments = $order->get('shipments')->referencedEntities();
+
+      if (!empty(($shipments)) && $shippingAddress = $this->getShippingAddress(reset($shipments))) {
+        $worldPayFormApi->addAddress($shippingAddress);
+      }
+
+    }
+
+    $data = $worldPayFormApi->createData();
+
+    $order->setData('worldpay_form', [
+      'request' => $data,
+    ]);
+
+    $order->save();
+
+    return $data;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getUrl() {
+    $url = C_WORLDPAY_BG_DEF_SERVER_TEST;
+    if ($this->getMode() == WORLDPAY_BG_SERVER_LIVE) {
+      $url = C_WORLDPAY_BG_DEF_SERVER_LIVE;
+    }
+    return $url;
+  }
+
+  /**
+   * @param $order
+   *
+   * @return \Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway\WorldPayHelper
+   */
+  protected function getWorldPayApi($order) {
+    return new WorldPayHelper($order, $this->getConfiguration());
+  }
+
+  /**
+   * Create a Commerce Payment from a WorldPay form request successful result.
+   *
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   *
+   * @return PaymentInterface $payment
+   *    The commerce payment record.
+   */
+  public function createPayment(array $responseData, OrderInterface $order) {
+
+    /** @var \Drupal\commerce_payment\PaymentStorageInterface $paymentStorage */
+    $paymentStorage = $this->entityTypeManager->getStorage('commerce_payment');
+
+    /** @var PaymentInterface $payment */
+    $payment = $paymentStorage->create([
+      'state' => 'authorization',
+      'amount' => $order->getTotalPrice(),
+      'payment_gateway' => $this->entityId,
+      'order_id' => $order->id(),
+      'test' => $this->getMode() == 'test',
+      'remote_id' => $responseData['MC_orderId'],
+      'remote_state' => $responseData['transStatus'],
+      'authorized' => $this->time->getRequestTime(),
+    ]);
+
+    $payment->save();
+
+    return $payment;
+  }
+
+  /**
+   * {@inheritdoc}
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
+  public function onReturn(OrderInterface $order, Request $request) {
+   $response = $request->getMethod() == 'POST' ? $request->getContent() : FALSE;
+    $this->loggerChannelFactory->get('commerce_worldpay')->debug($request->getContent());
+    if (!$response) {
+      throw new PaymentGatewayException();
+    }
+
+    // Get and check the VendorTxCode.
+    $txCode = isset($response['transId']) ? $response['transId'] : FALSE;
+    if (empty($txCode)) {
+      $this->loggerChannelFactory->get('commerce_worldpay')
+        ->error('No Code returned.');
+      throw new PaymentGatewayException('No Code returned.');
+    }
+
+    if ($response['MC_orderId'] == $order->id() && $response['transStatus'] === 'Y') {
+      $payment = $this->createPayment($response, $order);
+      $payment->state = 'capture_completed';
+      $payment->save();
+
+
+      $logLevel = 'info';
+      $logMessage = 'OK Payment callback received from SagePay for order %order_id with status code %transID';
+      $logContext = [
+        '%order_id' => $order->id(),
+        '%transID' => $response['transId'],
+      ];
+
+      $this->loggerChannelFactory->get('commerce_worldpay')
+        ->log($logLevel, $logMessage, $logContext);
+    }
+    else {
+      $logContext = [
+        '%order_id' => $order->id(),
+        '%transID' => $response['transId'],
+      ];
+      $this->loggerChannelFactory->get('commerce_worldpay')
+        ->log('error', 'Error while retrieving data from WorldPay payment system', $logContext);
+      Drupal::messenger()->addError('Error while retrieving data from WorldPay payment system');
+      throw new PaymentGatewayException('ERROR result from WorldPay for order ' . $response['transId']);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('entity_type.manager'),
+      $container->get('plugin.manager.commerce_payment_type'),
+      $container->get('plugin.manager.commerce_payment_method_type'),
+      $container->get('request_stack'),
+      $container->get('logger.factory'),
+      $container->get('datetime.time'),
+      $container->get('module_handler')
+    );
+  }
+
 }

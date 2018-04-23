@@ -4,9 +4,7 @@ namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
 
 use Drupal\commerce_payment\Entity\PaymentInterface;
 use Drupal\commerce_payment\Entity\PaymentMethodInterface;
-use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OnsitePaymentGatewayBase;
-use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -17,7 +15,7 @@ use Drupal\Core\Form\FormStateInterface;
  *   label = @Translation("Worldpay (Direct)"),
  *   display_label = @Translation("Worldpay"),
  *    forms = {
- *     "onsite-payment" = "Drupal\commerce_worldpay\PluginForm\WorldpayDirectForm",
+ *     "onsite-payment" = "Drupal\commerce_worldpay\PluginForm\Onsite\WorldpayDirectForm",
  *   },
  *   payment_method_types = {"credit_card"},
  *   credit_card_types = {
@@ -91,7 +89,6 @@ class WorldpayDirect extends OnsitePaymentGatewayBase implements WorldpayDirectI
       $this->configuration['client_key'] = $values['client_key'];
     }
   }
-
 
   /**
    * Creates a payment.
