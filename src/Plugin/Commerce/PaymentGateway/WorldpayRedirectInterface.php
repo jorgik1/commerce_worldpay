@@ -11,7 +11,7 @@ use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGateway
 interface WorldpayRedirectInterface  extends OffsitePaymentGatewayInterface {
 
   /**
-   * Get the Sagepay form integration url.
+   * Get the WorldPay form integration url.
    */
   public function getUrl();
 
