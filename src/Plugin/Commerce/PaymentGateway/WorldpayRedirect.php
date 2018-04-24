@@ -395,17 +395,14 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $shipments = $order->get('shipments')->referencedEntities();
 
       if (!empty(($shipments)) && $shippingAddress = $this->getShippingAddress(reset($shipments))) {
-        $worldPayFormApi->addAddress($shippingAddress);
+        $worldPayFormApi->addShipmentAddress($shippingAddress);
       }
-
     }
 
     $data = $worldPayFormApi->createData();
-
     $order->setData('worldpay_form', [
       'request' => $data,
     ]);
-
     $order->save();
 
     return $data;

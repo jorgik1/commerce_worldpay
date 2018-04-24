@@ -52,16 +52,19 @@ trait WorldpayPymentTrait {
     if (!$shippingProfile = $shipment->getShippingProfile()) {
       return FALSE;
     }
+    $country_list  = \Drupal::service('address.country_repository')->getList();
+
     /** @var \Drupal\address\Plugin\Field\FieldType\AddressItem $address */
     $shippingAddress = $shippingProfile->get('address')->first();
     return [
-      'DeliveryFirstnames' => $shippingAddress->getGivenName(),
+      'DeliveryFirstname' => $shippingAddress->getGivenName(),
       'DeliverySurname' => $shippingAddress->getFamilyName(),
       'DeliveryAddress1' => $shippingAddress->getAddressLine1(),
       'DeliveryAddress2' => $shippingAddress->getAddressLine2(),
       'DeliveryCity' => $shippingAddress->getLocality(),
       'DeliveryPostCode' => $shippingAddress->getPostalCode(),
       'DeliveryCountry' => $shippingAddress->getCountryCode(),
+      'DeliveryCountryString' => $country_list[$shippingAddress->getCountryCode()],
     ];
   }
 }

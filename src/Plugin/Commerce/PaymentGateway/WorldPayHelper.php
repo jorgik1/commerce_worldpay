@@ -46,6 +46,25 @@ class WorldPayHelper {
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
+  public function addShipmentAddress(array $addressData) {
+    if (NULL === $addressData) {
+      throw new MissingDataException('There is no address data provided!');
+    }
+
+    $this->data += [
+      'name' => $addressData['DeliveryFirstname'] . ' ' . $addressData['DeliverySurname'],
+      'address' => $addressData['DeliveryAddress1'],
+      'postcode' => $addressData['DeliveryPostCode'],
+      'country' => $addressData['DeliveryCountry'],
+      'countryString' => $addressData['DeliveryCountryString'],
+    ];
+  }
+
+  /**
+   * @param array $addressData
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
   public function addAddress(array $addressData) {
     if (NULL === $addressData) {
       throw new MissingDataException('There is no address data provided!');
