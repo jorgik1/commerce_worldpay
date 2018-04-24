@@ -81,7 +81,7 @@ class WorldPayHelper {
       'signatureFields' => implode(':', WorldpayRedirect::md5signatureFields()),
       'signature' => $this->buildMd5Hash([
         $this->config['installation_id'],
-        $this->order->getTotalPrice(),
+        $this->order->getTotalPrice()->getNumber(),
         $this->order->getTotalPrice()->getCurrencyCode(),
         $this->order->uuid(),
         $this->order->id(),

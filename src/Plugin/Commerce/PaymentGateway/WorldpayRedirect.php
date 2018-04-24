@@ -487,7 +487,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
 
       $logLevel = 'info';
-      $logMessage = 'OK Payment callback received from SagePay for order %order_id with status code %transID';
+      $logMessage = 'OK Payment callback received from WorldPay for order %order_id with status code %transID';
       $logContext = [
         '%order_id' => $order->id(),
         '%transID' => $response['transId'],
