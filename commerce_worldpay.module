@@ -3,10 +3,6 @@
 define('WORLDPAY_BG_SERVER_TEST', 'Test');
 define('WORLDPAY_BG_SERVER_LIVE', 'Live');
 
-define('C_WORLDPAY_BG_TXN_MODE_LIVE', 'live');
-define('C_WORLDPAY_BG_TXN_MODE_TEST', 'live_test');
-// define('WORLDPAY_TXN_MODE_SIMULATION', 'developer');
-
 // Default URLs for WorldPay transaction.
 define(
   'C_WORLDPAY_BG_DEF_SERVER_LIVE',
