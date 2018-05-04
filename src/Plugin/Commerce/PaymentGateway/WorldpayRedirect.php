@@ -9,6 +9,7 @@ use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
 use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
+use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsNotificationsInterface;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -16,9 +17,12 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Provides the Worldpay Redirect payment gateway.
@@ -120,6 +124,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         'txn_type' => '',
         'debug' => 'log',
         'payment_response_logging' => 'full_wppr',
+        'confirmed_setup' => FALSE,
         'site_id' => '',
         'payment_parameters' => [
           'test_mode' => '',
@@ -167,6 +172,33 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
+    $url = $this->getNotifyUrl()->toString();
+
+    $form['help_text']['worldpay_settings'] = [
+      '#markup' => $this->t(
+        '<h4>Installation instructions</h4>
+      <p>For this module to work properly you must configure a few specific options in your RBS WorldPay account under <em>Installation Administration</em> settings:</p>
+      <ul>
+        <li><strong>Payment Response URL</strong> must be set to: <em>@response_url</em></li>
+        <li><strong>SignatureFields must be set to</strong>: <em>@sig</em></li>
+      </ul>',
+        [
+          '@response_url' => '<wpdisplay item=' . C_WORLDPAY_BG_RESPONSE_URL_TOKEN
+            . '-ppe empty="' . $url . '">',
+          '@sig' => implode(':', static::md5signatureFields()),
+        ]
+      ),
+    ];
+
+    $form['help_text']['confirmed_setup'] = [
+      '#type'          => 'checkbox',
+      '#title'         => t(
+        'I have completed the WorldPay installation setup (above).'
+      ),
+      '#default_value' => $this->configuration['confirmed_setup'],
+      '#required'      => TRUE,
+      '#tree'          => TRUE,
+    ];
 
     $form['installation_id'] = [
       '#type' => 'textfield',
@@ -201,6 +233,13 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         ),
       ],
       '#default_value' => $this->configuration['payment_response_logging'],
+    ];
+
+    $form['help_text'] = [
+      '#type'  => 'fieldset',
+      '#title' => t('Installation instructions'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
     ];
 
     $form['site_id'] = [
@@ -356,6 +395,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $values = $form_state->getValue($form['#parents']);
       $this->configuration['installation_id'] = $values['installation_id'];
       $this->configuration['debug'] = $values['debug'];
+      $this->configuration['confirmed_setup'] = $values['confirmed_setup'];
       $this->configuration['site_id'] = $values['site_id'];
       $this->configuration['payment_parameters']['test_mode'] = $values['payment_parameters']['test_mode'];
       $this->configuration['payment_parameters']['test_result'] = $values['payment_parameters']['test_result'];
@@ -420,12 +460,53 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getNotifyUrl() {
+    return Url::fromRoute('commerce_payment.notify', [
+      'commerce_payment_gateway' => $this->getPluginId()
+    ], ['absolute' => TRUE]);
+  }
+
+  /**
    * @param $order
    *
    * @return \Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway\WorldPayHelper
    */
   protected function getWorldPayApi($order) {
     return new WorldPayHelper($order, $this->getConfiguration());
+  }
+
+  /**
+   * Builds the URL to the "return" page.
+   *
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   *   The order.
+   *
+   * @return string
+   *   The "return" page url.
+   */
+  protected function buildReturnUrl(OrderInterface $order) {
+    return Url::fromRoute('commerce_payment.checkout.return', [
+      'commerce_order' => $order->id(),
+      'step' => 'payment',
+    ], ['absolute' => FALSE])->toString();
+  }
+
+  /**
+   * Builds the URL to the "cancel" page.
+   *
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   *   The order.
+   *
+   * @return string
+   *   The "cancel" page url.
+   */
+  protected function buildCancelUrl(OrderInterface $order) {
+    return Url::fromRoute('commerce_payment.checkout.cancel', [
+      'commerce_order' => $order->id(),
+      'step' => 'payment',
+    ], ['absolute' => FALSE])->toString();
   }
 
   /**
@@ -460,24 +541,38 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
   /**
    * {@inheritdoc}
+   * @throws \InvalidArgumentException
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function onReturn(OrderInterface $order, Request $request) {
-   $response = $request->getMethod() == 'POST' ? $request->getContent() : FALSE;
-    $this->loggerChannelFactory->get('commerce_worldpay')->debug($request->getContent());
+  public function onNotify(Request $request) {
+    $response = $request->getMethod() == 'POST' ? $request->getContent() : FALSE;
     if (!$response) {
       throw new PaymentGatewayException();
     }
 
+    // Just development debug.
+    $this->loggerChannelFactory->get('commerce_worldpay')
+      ->debug($request->getContent());
+
+
     // Get and check the VendorTxCode.
     $txCode = isset($response['transId']) ? $response['transId'] : FALSE;
+
     if (empty($txCode)) {
       $this->loggerChannelFactory->get('commerce_worldpay')
         ->error('No Code returned.');
       throw new PaymentGatewayException('No Code returned.');
     }
 
-    if ($response['MC_orderId'] == $order->id() && $response['transStatus'] === 'Y') {
+    if (empty($response['MC_orderId'])) {
+      $this->loggerChannelFactory->get('commerce_worldpay')
+        ->error('No Order ID returned.');
+      throw new PaymentGatewayException('No Order ID returned.');
+    }
+    $order = $this->entityTypeManager->getStorage('orders')
+      ->load($response['MC_orderId']);
+
+    if ($order instanceof OrderInterface && $response['transStatus'] === 'Y') {
       $payment = $this->createPayment($response, $order);
       $payment->state = 'capture_completed';
       $payment->save();
@@ -492,16 +587,20 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
       $this->loggerChannelFactory->get('commerce_worldpay')
         ->log($logLevel, $logMessage, $logContext);
+      return new RedirectResponse($this->buildReturnUrl($order));
+
     }
-    else {
+
+    if ($order instanceof OrderInterface && $response['transStatus'] === 'C') {
       $logContext = [
         '%order_id' => $order->id(),
         '%transID' => $response['transId'],
       ];
       $this->loggerChannelFactory->get('commerce_worldpay')
         ->log('error', 'Error while retrieving data from WorldPay payment system', $logContext);
-      Drupal::messenger()->addError('Error while retrieving data from WorldPay payment system');
-      throw new PaymentGatewayException('ERROR result from WorldPay for order ' . $response['transId']);
+      Drupal::messenger()
+        ->addError('Error while retrieving data from WorldPay payment system');
+      return new RedirectResponse($this->buildCancelUrl($order));
     }
   }
 

@@ -104,10 +104,10 @@ class WorldPayHelper {
         $this->order->getTotalPrice()->getCurrencyCode(),
         $this->order->uuid(),
         $this->order->id(),
-        $this->buildReturnUrl($this->order),
+        $this->getNotifyUrl(),
       ]),
       // The path WorldPay should send its Payment Response to
-      'MC_callback' => $this->buildReturnUrl($this->order),
+      'MC_callback' => $this->getNotifyUrl(),
       // Used in WorldPay custom pages
       'C_siteTitle' => \Drupal::config('system.site')->get('name'),
     ];
@@ -127,34 +127,11 @@ class WorldPayHelper {
   }
 
   /**
-   * Builds the URL to the "return" page.
-   *
-   * @param \Drupal\commerce_order\Entity\OrderInterface $order
-   *   The order.
-   *
-   * @return string
-   *   The "return" page url.
+   * @return \Drupal\Core\GeneratedUrl|string
    */
-  protected function buildReturnUrl(OrderInterface $order) {
-    return Url::fromRoute('commerce_payment.checkout.return', [
-      'commerce_order' => $order->id(),
-      'step' => 'payment',
-    ], ['absolute' => FALSE])->toString();
-  }
-
-  /**
-   * Builds the URL to the "cancel" page.
-   *
-   * @param \Drupal\commerce_order\Entity\OrderInterface $order
-   *   The order.
-   *
-   * @return string
-   *   The "cancel" page url.
-   */
-  protected function buildCancelUrl(OrderInterface $order) {
-    return Url::fromRoute('commerce_payment.checkout.cancel', [
-      'commerce_order' => $order->id(),
-      'step' => 'payment',
-    ], ['absolute' => FALSE])->toString();
+  public function getNotifyUrl() {
+    return Url::fromRoute('commerce_payment.notify', [
+      'commerce_payment_gateway' => 'worldpay_redirect',
+    ], ['absolute' => TRUE])->toString();
   }
 }
