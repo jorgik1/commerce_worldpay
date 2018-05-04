@@ -16,6 +16,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -587,7 +588,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
       $this->loggerChannelFactory->get('commerce_worldpay')
         ->log($logLevel, $logMessage, $logContext);
-      return new RedirectResponse($this->buildReturnUrl($order));
+      return new TrustedRedirectResponse($this->buildReturnUrl($order));
 
     }
 
@@ -600,8 +601,10 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         ->log('error', 'Error while retrieving data from WorldPay payment system', $logContext);
       Drupal::messenger()
         ->addError('Error while retrieving data from WorldPay payment system');
-      return new RedirectResponse($this->buildCancelUrl($order));
+      return new TrustedRedirectResponse($this->buildCancelUrl($order));
     }
+
+    return $response;
   }
 
   /**
