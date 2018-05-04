@@ -175,6 +175,13 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     $form = parent::buildConfigurationForm($form, $form_state);
     $url = $this->getNotifyUrl()->toString();
 
+    $form['help_text'] = [
+      '#type'  => 'fieldset',
+      '#title' => t('Installation instructions'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    ];
+
     $form['help_text']['worldpay_settings'] = [
       '#markup' => $this->t(
         '<h4>Installation instructions</h4>
@@ -234,13 +241,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         ),
       ],
       '#default_value' => $this->configuration['payment_response_logging'],
-    ];
-
-    $form['help_text'] = [
-      '#type'  => 'fieldset',
-      '#title' => t('Installation instructions'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
     ];
 
     $form['site_id'] = [
