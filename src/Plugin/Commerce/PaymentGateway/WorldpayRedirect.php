@@ -433,7 +433,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     }
     if ($this->moduleHandler->moduleExists('commerce_shipping')) {
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
-      $shipments = $order->get('shipment')->referencedEntities();
+      $shipments = $order->get('shipments')->referencedEntities();
 
       if (!empty(($shipments)) && $shippingAddress = $this->getShippingAddress(reset($shipments))) {
         $worldPayFormApi->addShipmentAddress($shippingAddress);
