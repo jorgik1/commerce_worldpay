@@ -433,7 +433,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     }
     if ($this->moduleHandler->moduleExists('commerce_shipping')) {
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
-      $shipments = $order->get('shipments')->referencedEntities();
+      $shipments = $order->get('shipment')->referencedEntities();
 
       if (!empty(($shipments)) && $shippingAddress = $this->getShippingAddress(reset($shipments))) {
         $worldPayFormApi->addShipmentAddress($shippingAddress);
@@ -570,8 +570,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         ->error('No Order ID returned.');
       throw new PaymentGatewayException('No Order ID returned.');
     }
-    $order = $this->entityTypeManager->getStorage('orders')
-      ->load($response['MC_orderId']);
+    $order = $this->entityTypeManager->getStorage('commerce_order')->load($response['MC_orderId']);
 
     if ($order instanceof OrderInterface && $response['transStatus'] === 'Y') {
       $payment = $this->createPayment($response, $order);
