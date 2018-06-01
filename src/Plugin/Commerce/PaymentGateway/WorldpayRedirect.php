@@ -540,7 +540,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     // Get and check the VendorTxCode.
     $txCode = $request->request->get('transId') !== NULL ? $request->request->get('transId') : FALSE;
 
-    if (empty($txCode) || $request->request->get('MC_orderId')) {
+    if (empty($txCode) || empty($request->request->get('MC_orderId'))) {
       $this->logger->error('No Transaction code have been returned.');
       return NULL;
     }
