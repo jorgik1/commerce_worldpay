@@ -528,23 +528,26 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
     if ($this->configuration['debug'] === 'log') {
       // Just development debug.
-      $this->logger->debug('<pre>' . print_r($response) . '</pre>');
+      $this->logger->debug('<pre>' . $response . '</pre>');
+      $this->logger->debug($request->getMethod());
+      $this->logger->debug($request->request->get('transId') . ' ' . $request->request->get('MC_orderId'));
+
     }
 
     // Get and check the VendorTxCode.
-    $txCode = isset($response['transId']) ? $response['transId'] : FALSE;
+    $txCode = $request->request->get('transId') !== NULL ? $request->request->get('transId') : FALSE;
 
     if (empty($txCode)) {
       $this->logger->error('No Code returned.');
       throw new PaymentGatewayException('No Code returned.');
     }
 
-    if (empty($response['MC_orderId'])) {
+    if (empty($request->request->get('MC_orderId'))) {
       $this->logger->error('No Order ID returned.');
       throw new PaymentGatewayException('No Order ID returned.');
     }
 
-    $order = $this->entityTypeManager->getStorage('commerce_order')->load($response['MC_orderId']);
+    $order = $this->entityTypeManager->getStorage('commerce_order')->load($request->request->get('MC_orderId'));
 
     if ($order instanceof OrderInterface && $response['transStatus'] === 'Y') {
       $payment = $this->createPayment($response, $order);
