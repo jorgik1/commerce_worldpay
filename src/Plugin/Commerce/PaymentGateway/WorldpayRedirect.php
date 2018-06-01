@@ -464,7 +464,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     return Url::fromRoute('commerce_payment.checkout.return', [
       'commerce_order' => $order->id(),
       'step' => 'payment',
-    ], ['absolute' => FALSE])->toString();
+    ], ['absolute' => TRUE])->toString();
   }
 
   /**
@@ -480,7 +480,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     return Url::fromRoute('commerce_payment.checkout.cancel', [
       'commerce_order' => $order->id(),
       'step' => 'payment',
-    ], ['absolute' => FALSE])->toString();
+    ], ['absolute' => TRUE])->toString();
   }
 
   /**
