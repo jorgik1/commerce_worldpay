@@ -423,7 +423,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     $data = $worldPayFormApi->createData();
     $order->setData('worldpay_form', [
       'request' => $data,
-      'return_url' => $this->getNotifyUrl()->toString(),
+      'return_url' => $this->buildReturnUrl($order),
     ]);
     $order->save();
 
@@ -519,7 +519,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
-  public function onNotify(Request $request) {
+  public function onReturn(OrderInterface $order, Request $request) {
     $content = $request->getMethod() === 'POST' ? $request->getContent() : FALSE;
     if (!$content) {
       $this->logger->error('There is no response was received');
@@ -544,8 +544,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $this->logger->error('No Transaction code have been returned.');
       return NULL;
     }
-
-    $order = $this->entityTypeManager->getStorage('commerce_order')->load($request->request->get('MC_orderId'));
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'Y') {
       $payment = $this->createPayment($request->request->all(), $order);
