@@ -559,7 +559,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return $this->buildReturnUrl($order);
+      return new Response('Success', Response::HTTP_OK);
     }
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'C') {
@@ -570,10 +570,11 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return $this->buildCancelUrl($order);
+      return new Response('Cancel', Response::HTTP_OK);
+
     }
 
-    return new Response();
+    return new Response('', Response::HTTP_OK);
   }
 
   /**
