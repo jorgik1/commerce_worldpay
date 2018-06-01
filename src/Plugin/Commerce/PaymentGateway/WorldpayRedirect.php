@@ -9,27 +9,24 @@ use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
 use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
-use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsNotificationsInterface;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Provides the Worldpay Redirect payment gateway.
  *
  * @CommercePaymentGateway(
- *   id = "worldpay_redirect",
+ *   id = "worldpay",
  *   label = @Translation("Worldpay (Redirect)"),
  *   display_label = @Translation("Worldpay"),
  *    forms = {
@@ -58,9 +55,9 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
   /**
    * The logger factory.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   * @var \Psr\Log\LoggerInterface
    */
-  private $loggerChannelFactory;
+  private $logger;
 
   /**
    * The time service.
@@ -93,7 +90,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    *   The payment method type manager.
    * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
    *   The request stack.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   * @param \Psr\Log\LoggerInterface $logger
    *   The logger factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
@@ -105,12 +102,12 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
                               PaymentTypeManager $payment_type_manager,
                               PaymentMethodTypeManager $payment_method_type_manager,
                               RequestStack $requestStack,
-                              LoggerChannelFactoryInterface $loggerChannelFactory,
+                              LoggerInterface $logger,
                               TimeInterface $time,
                               ModuleHandlerInterface $moduleHandler) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $payment_type_manager, $payment_method_type_manager, $time);
     $this->requestStack = $requestStack;
-    $this->loggerChannelFactory = $loggerChannelFactory;
+    $this->logger = $logger;
     $this->time = $time;
     $this->moduleHandler = $moduleHandler;
   }
@@ -124,7 +121,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         'txn_mode' => C_WORLDPAY_BG_DEF_SERVER_TEST,
         'txn_type' => '',
         'debug' => 'log',
-        'payment_response_logging' => 'full_wppr',
         'confirmed_setup' => FALSE,
         'site_id' => '',
         'payment_parameters' => [
@@ -173,7 +169,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
-    $url = $this->getNotifyUrl()->toString();
+    $url = \Drupal::request()->getSchemeAndHttpHost() . '/payment/notify/MACHINE_NAME_OF_PAYMENT_GATEWAY';
 
     $form['help_text'] = [
       '#type'  => 'fieldset',
@@ -227,20 +223,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         'none' => t('None'),
       ],
       '#default_value' => $this->configuration['debug'],
-    ];
-
-    $form['payment_response_logging'] = [
-      '#type' => 'radios',
-      '#title' => t('Payment Response/Notificaton logging'),
-      '#options' => [
-        'notification' => t(
-          'Log notifications during WorldPay Payment Notifications validation and processing.'
-        ),
-        'full_wppr' => t(
-          'Log notifications with the full WorldPay Payment Notifications during validation and processing (used for debugging).'
-        ),
-      ],
-      '#default_value' => $this->configuration['payment_response_logging'],
     ];
 
     $form['site_id'] = [
@@ -313,8 +295,8 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#description' => t(
         'This will only be used if you have checked "Use WorldPay installation password?".'
       ),
-      '#size' => 16,
-      '#maxlength' => 16,
+      '#size' => 20,
+      '#maxlength' => 30,
       '#default_value' => $this->configuration['payment_security']['password'],
     ];
 
@@ -322,8 +304,8 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       '#type' => 'textfield',
       '#title' => t('Secret key'),
       '#description' => t('This is the key used to hash some of the content for verification between Worldpay and this site".'),
-      '#size' => 16,
-      '#maxlength' => 16,
+      '#size' => 20,
+      '#maxlength' => 30,
       '#default_value' => $this->configuration['payment_security']['md5_salt'],
       '#required' => TRUE,
     ];
@@ -396,11 +378,10 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $values = $form_state->getValue($form['#parents']);
       $this->configuration['installation_id'] = $values['installation_id'];
       $this->configuration['debug'] = $values['debug'];
-      $this->configuration['confirmed_setup'] = $values['confirmed_setup'];
+      $this->configuration['confirmed_setup'] = $values['help_text']['confirmed_setup'];
       $this->configuration['site_id'] = $values['site_id'];
       $this->configuration['payment_parameters']['test_mode'] = $values['payment_parameters']['test_mode'];
       $this->configuration['payment_parameters']['test_result'] = $values['payment_parameters']['test_result'];
-      $this->configuration['payment_parameters']['pm_select_localy'] = $values['payment_parameters']['pm_select_localy'];
       $this->configuration['payment_security']['password'] = $values['payment_security']['password'];
       $this->configuration['payment_security']['md5_salt'] = $values['payment_security']['md5_salt'];
       $this->configuration['payment_urls']['live'] = $values['payment_urls']['live'];
@@ -426,7 +407,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $worldPayFormApi->addAddress($this->getBillingAddress($order));
     }
     catch (MissingDataException $exception) {
-      $this->loggerChannelFactory->get('commerce_worldpay')->error(
+      $this->logger->get('commerce_worldpay')->error(
         $exception->getMessage()
       );
       return FALSE;
@@ -443,6 +424,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     $data = $worldPayFormApi->createData();
     $order->setData('worldpay_form', [
       'request' => $data,
+      'return_url' => $this->getNotifyUrl()->toString(),
     ]);
     $order->save();
 
@@ -458,15 +440,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $url = C_WORLDPAY_BG_DEF_SERVER_LIVE;
     }
     return $url;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getNotifyUrl() {
-    return Url::fromRoute('commerce_payment.notify', [
-      'commerce_payment_gateway' => $this->getPluginId()
-    ], ['absolute' => TRUE]);
   }
 
   /**
@@ -514,6 +487,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    * Create a Commerce Payment from a WorldPay form request successful result.
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    *
    * @return PaymentInterface $payment
    *    The commerce payment record.
@@ -544,32 +518,32 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    * {@inheritdoc}
    * @throws \InvalidArgumentException
    * @throws \Drupal\Core\Entity\EntityStorageException
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function onNotify(Request $request) {
-    $response = $request->getMethod() == 'POST' ? $request->getContent() : FALSE;
+    $response = $request->getContent();
     if (!$response) {
-      throw new PaymentGatewayException();
+      throw new PaymentGatewayException('There is no response was received');
     }
 
-    // Just development debug.
-    $this->loggerChannelFactory->get('commerce_worldpay')
-      ->debug($request->getContent());
-
+    if ($this->configuration['debug'] === 'log') {
+      // Just development debug.
+      $this->logger->debug('<pre>' . print_r($response) . '</pre>');
+    }
 
     // Get and check the VendorTxCode.
     $txCode = isset($response['transId']) ? $response['transId'] : FALSE;
 
     if (empty($txCode)) {
-      $this->loggerChannelFactory->get('commerce_worldpay')
-        ->error('No Code returned.');
+      $this->logger->error('No Code returned.');
       throw new PaymentGatewayException('No Code returned.');
     }
 
     if (empty($response['MC_orderId'])) {
-      $this->loggerChannelFactory->get('commerce_worldpay')
-        ->error('No Order ID returned.');
+      $this->logger->error('No Order ID returned.');
       throw new PaymentGatewayException('No Order ID returned.');
     }
+
     $order = $this->entityTypeManager->getStorage('commerce_order')->load($response['MC_orderId']);
 
     if ($order instanceof OrderInterface && $response['transStatus'] === 'Y') {
@@ -585,21 +559,19 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $response['transId'],
       ];
 
-      $this->loggerChannelFactory->get('commerce_worldpay')
-        ->log($logLevel, $logMessage, $logContext);
+      $this->logger->log($logLevel, $logMessage, $logContext);
       return new TrustedRedirectResponse($this->buildReturnUrl($order));
 
     }
 
     if ($order instanceof OrderInterface && $response['transStatus'] === 'C') {
+      $logLevel = 'info';
+      $logMessage = 'Cancel Payment callback received from WorldPay for order %order_id with status code %transID';
       $logContext = [
         '%order_id' => $order->id(),
         '%transID' => $response['transId'],
       ];
-      $this->loggerChannelFactory->get('commerce_worldpay')
-        ->log('error', 'Error while retrieving data from WorldPay payment system', $logContext);
-      Drupal::messenger()
-        ->addError('Error while retrieving data from WorldPay payment system');
+      $this->logger->log($logLevel, $logMessage, $logContext);
       return new TrustedRedirectResponse($this->buildCancelUrl($order));
     }
 
@@ -618,7 +590,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $container->get('plugin.manager.commerce_payment_type'),
       $container->get('plugin.manager.commerce_payment_method_type'),
       $container->get('request_stack'),
-      $container->get('logger.factory'),
+      $container->get('logger.channel.commerce_worldpay'),
       $container->get('datetime.time'),
       $container->get('module_handler')
     );

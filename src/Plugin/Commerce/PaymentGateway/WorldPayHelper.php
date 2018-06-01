@@ -104,10 +104,10 @@ class WorldPayHelper {
         $this->order->getTotalPrice()->getCurrencyCode(),
         $this->order->uuid(),
         $this->order->id(),
-        $this->getNotifyUrl(),
+        $this->order->getData('worldpay_form')['return_url'],
       ]),
       // The path WorldPay should send its Payment Response to
-      'MC_callback' => $this->getNotifyUrl(),
+      'MC_callback' => $this->order->getData('worldpay_form')['return_url'],
       // Used in WorldPay custom pages
       'C_siteTitle' => \Drupal::config('system.site')->get('name'),
     ];
@@ -126,12 +126,4 @@ class WorldPayHelper {
     return md5($this->config['payment_security']['md5_salt'] . ':' . implode(':', $signature_fields_values));
   }
 
-  /**
-   * @return \Drupal\Core\GeneratedUrl|string
-   */
-  public function getNotifyUrl() {
-    return Url::fromRoute('commerce_payment.notify', [
-      'commerce_payment_gateway' => 'worldpay_redirect',
-    ], ['absolute' => TRUE])->toString();
-  }
 }
