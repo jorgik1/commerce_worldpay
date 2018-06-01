@@ -521,7 +521,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function onNotify(Request $request) {
-    $response = $request->getContent();
+    $response = $request->getMethod() === 'POST' ? $request->getContent() : FALSE;
     if (!$response) {
       throw new PaymentGatewayException('There is no response was received');
     }
@@ -529,7 +529,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     if ($this->configuration['debug'] === 'log') {
       // Just development debug.
       $this->logger->debug('<pre>' . $response . '</pre>');
-      $this->logger->debug($request->getMethod());
       $this->logger->debug($request->request->get('transId') . ' ' . $request->request->get('MC_orderId'));
 
     }
@@ -549,7 +548,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
     $order = $this->entityTypeManager->getStorage('commerce_order')->load($request->request->get('MC_orderId'));
 
-    if ($order instanceof OrderInterface && $response['transStatus'] === 'Y') {
+    if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'Y') {
       $payment = $this->createPayment($response, $order);
       $payment->state = 'capture_completed';
       $payment->save();
@@ -567,7 +566,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
     }
 
-    if ($order instanceof OrderInterface && $response['transStatus'] === 'C') {
+    if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'C') {
       $logLevel = 'info';
       $logMessage = 'Cancel Payment callback received from WorldPay for order %order_id with status code %transID';
       $logContext = [
