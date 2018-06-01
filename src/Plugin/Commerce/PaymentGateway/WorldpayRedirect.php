@@ -2,10 +2,8 @@
 
 namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
 
-use Drupal;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\Entity\PaymentInterface;
-use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
 use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
@@ -21,6 +19,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Provides the Worldpay Redirect payment gateway.
@@ -521,35 +520,35 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function onNotify(Request $request) {
-    $response = $request->getMethod() === 'POST' ? $request->getContent() : FALSE;
-    if (!$response) {
-      throw new PaymentGatewayException('There is no response was received');
+    $content = $request->getMethod() === 'POST' ? $request->getContent() : FALSE;
+    if (!$content) {
+      $this->logger->error('There is no response was received');
+      return NULL;
     }
 
     if ($this->configuration['debug'] === 'log') {
       // Just development debug.
-      $this->logger->debug('<pre>' . $response . '</pre>');
-      $this->logger->debug($request->request->get('transId') . ' ' . $request->request->get('MC_orderId'));
-
+      $this->logger->debug('<pre>' . $content . '</pre>');
+      $this->logger->debug(
+        'Transaction ID %transID Order ID %orderID', [
+          '%transID' => $request->request->get('transId'),
+          '%orderID' => $request->request->get('MC_orderId')
+        ]
+      );
     }
 
     // Get and check the VendorTxCode.
     $txCode = $request->request->get('transId') !== NULL ? $request->request->get('transId') : FALSE;
 
-    if (empty($txCode)) {
-      $this->logger->error('No Code returned.');
-      throw new PaymentGatewayException('No Code returned.');
-    }
-
-    if (empty($request->request->get('MC_orderId'))) {
-      $this->logger->error('No Order ID returned.');
-      throw new PaymentGatewayException('No Order ID returned.');
+    if (empty($txCode) || $request->request->get('MC_orderId')) {
+      $this->logger->error('No Transaction code have been returned.');
+      return NULL;
     }
 
     $order = $this->entityTypeManager->getStorage('commerce_order')->load($request->request->get('MC_orderId'));
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'Y') {
-      $payment = $this->createPayment($response, $order);
+      $payment = $this->createPayment($request->request->all(), $order);
       $payment->state = 'capture_completed';
       $payment->save();
 
@@ -558,7 +557,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $logMessage = 'OK Payment callback received from WorldPay for order %order_id with status code %transID';
       $logContext = [
         '%order_id' => $order->id(),
-        '%transID' => $response['transId'],
+        '%transID' => $request->request->get('transId'),
       ];
 
       $this->logger->log($logLevel, $logMessage, $logContext);
@@ -571,13 +570,13 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $logMessage = 'Cancel Payment callback received from WorldPay for order %order_id with status code %transID';
       $logContext = [
         '%order_id' => $order->id(),
-        '%transID' => $response['transId'],
+        '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
       return new TrustedRedirectResponse($this->buildCancelUrl($order));
     }
 
-    return $response;
+    return new Response();
   }
 
   /**
