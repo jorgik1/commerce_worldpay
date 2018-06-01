@@ -4,6 +4,7 @@ namespace Drupal\commerce_worldpay\Plugin\Commerce\PaymentGateway;
 
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\Entity\PaymentInterface;
+use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
 use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
@@ -406,7 +407,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $worldPayFormApi->addAddress($this->getBillingAddress($order));
     }
     catch (MissingDataException $exception) {
-      $this->logger->get('commerce_worldpay')->error(
+      $this->logger->error(
         $exception->getMessage()
       );
       return FALSE;
@@ -523,7 +524,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     $content = $request->getMethod() === 'POST' ? $request->getContent() : FALSE;
     if (!$content) {
       $this->logger->error('There is no response was received');
-      return NULL;
+      throw new PaymentGatewayException();
     }
 
     if ($this->configuration['debug'] === 'log') {
@@ -542,7 +543,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
     if (empty($txCode) || empty($request->request->get('MC_orderId'))) {
       $this->logger->error('No Transaction code have been returned.');
-      return NULL;
+      throw new PaymentGatewayException();
     }
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'Y') {
@@ -557,7 +558,6 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new Response('Success', Response::HTTP_OK);
     }
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'C') {
@@ -568,11 +568,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new Response('Cancel', Response::HTTP_OK);
-
     }
-
-    return new Response('', Response::HTTP_OK);
   }
 
   /**
