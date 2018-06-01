@@ -552,17 +552,14 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $payment->state = 'capture_completed';
       $payment->save();
 
-
       $logLevel = 'info';
       $logMessage = 'OK Payment callback received from WorldPay for order %order_id with status code %transID';
       $logContext = [
         '%order_id' => $order->id(),
         '%transID' => $request->request->get('transId'),
       ];
-
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new TrustedRedirectResponse($this->buildReturnUrl($order));
-
+      return $this->buildReturnUrl($order);
     }
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'C') {
@@ -573,7 +570,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new TrustedRedirectResponse($this->buildCancelUrl($order));
+      return $this->buildCancelUrl($order);
     }
 
     return new Response();
