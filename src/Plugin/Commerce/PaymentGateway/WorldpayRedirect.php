@@ -424,7 +424,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     $data = $worldPayFormApi->createData();
     $order->setData('worldpay_form', [
       'request' => $data,
-      'return_url' => $this->buildReturnUrl($order),
+      'return_url' => $this->getNotifyUrl()->toString(),
     ]);
     $order->save();
 
@@ -520,7 +520,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
-  public function onReturn(OrderInterface $order, Request $request) {
+  public function onNotify(Request $request) {
     $content = $request->getMethod() === 'POST' ? $request->getContent() : FALSE;
     if (!$content) {
       $this->logger->error('There is no response was received');
@@ -546,6 +546,8 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       throw new PaymentGatewayException();
     }
 
+    $order = $this->entityTypeManager->getStorage('commerce_order')->load($request->request->get('MC_orderId'));
+
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'Y') {
       $payment = $this->createPayment($request->request->all(), $order);
       $payment->state = 'capture_completed';
@@ -558,17 +560,21 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
+      return new TrustedRedirectResponse($this->buildReturnUrl($order));
     }
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'C') {
       $logLevel = 'info';
-      $logMessage = 'Cancel Payment callback received from WorldPay for order %order_id with status code %transID';
+      $logMessage
+        = 'Cancel Payment callback received from WorldPay for order %order_id with status code %transID';
       $logContext = [
         '%order_id' => $order->id(),
-        '%transID' => $request->request->get('transId'),
+        '%transID'  => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
+      return new TrustedRedirectResponse($this->buildCancelUrl($order));
     }
+    return new Response('', Response::HTTP_BAD_REQUEST);
   }
 
   /**
