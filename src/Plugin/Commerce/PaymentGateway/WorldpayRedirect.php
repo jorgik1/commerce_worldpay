@@ -18,6 +18,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -560,7 +561,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new TrustedRedirectResponse($this->buildReturnUrl($order));
+      return new RedirectResponse($this->buildReturnUrl($order));
     }
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'C') {
@@ -572,7 +573,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID'  => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new TrustedRedirectResponse($this->buildCancelUrl($order));
+      return new RedirectResponse($this->buildCancelUrl($order));
     }
     return new Response('', Response::HTTP_BAD_REQUEST);
   }
