@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="" version="HTML+RDFa 1.0" dir="">
+<head profile="">
+    <title></title>
+    <!-- Embed the stylesheet stored on WorldPay's server -->
+    <style type="text/css">
+    </style>
+</head>
+<body>
+<div id="page-wrapper">
+    <div id="page">
+        <div id="header">
+            <div class="section">
+                <div id="site-name">
+                    <strong><span></span></strong>
+                </div>
+            </div>
+        </div>
+        <div id="main">
+            <header>
+                <h1></h1>
+                <p>{{ 'Payment was cancelled. No funds have been transferred.' }}</p>
+                <table class="bartik">
+                    <thead>
+                    <tr>
+                        <th>{{ 'Order No' }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>{{ order_id }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <WPDISPLAY ITEM=banner></WPDISPLAY>
+                <p id="return-url">
+                    <a href="{{ return_url }}">Return on site</a>
+                </p>
+            </header>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

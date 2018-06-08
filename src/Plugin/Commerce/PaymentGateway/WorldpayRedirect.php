@@ -13,9 +13,11 @@ use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element\Html;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
+use Drupal\Core\Utility\LinkGeneratorInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -74,6 +76,12 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    */
   private $moduleHandler;
 
+
+  /**
+   * @var \Drupal\Core\Utility\LinkGeneratorInterface
+   */
+  private $linkGenerator;
+
   /**
    * Constructs a new PaymentGatewayBase object.
    *
@@ -105,12 +113,14 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
                               RequestStack $requestStack,
                               LoggerInterface $logger,
                               TimeInterface $time,
-                              ModuleHandlerInterface $moduleHandler) {
+                              ModuleHandlerInterface $moduleHandler,
+                              LinkGeneratorInterface $linkGenerator) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $payment_type_manager, $payment_method_type_manager, $time);
     $this->requestStack = $requestStack;
     $this->logger = $logger;
     $this->time = $time;
     $this->moduleHandler = $moduleHandler;
+    $this->linkGenerator = $linkGenerator;
   }
 
   /**
@@ -170,7 +180,8 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
-    $url = \Drupal::request()->getSchemeAndHttpHost() . '/payment/notify/MACHINE_NAME_OF_PAYMENT_GATEWAY';
+    $payment_url = \Drupal::request()->getSchemeAndHttpHost() . '/payment/notify/MACHINE_NAME_OF_PAYMENT_GATEWAY';
+    $help_url = URL::fromUri('http://www.worldpay.com/support/kb/bg/paymentresponse/pr5502.html');
 
     $form['help_text'] = [
       '#type'  => 'fieldset',
@@ -185,12 +196,16 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       <p>For this module to work properly you must configure a few specific options in your RBS WorldPay account under <em>Installation Administration</em> settings:</p>
       <ul>
         <li><strong>Payment Response URL</strong> must be set to: <em>@response_url</em></li>
+        <li><strong>Payment Response enabled?</strong> must be <em>enabled</em></li>
+        <li><strong>Enable the Shopper Response</strong> should be <em>enabled</em> to get the Commerce response page.</li>
+        <li><strong>Shopper Redirect URL</strong> and set the value to be <em>MC_callback</em>. @link.</li>
         <li><strong>SignatureFields must be set to</strong>: <em>@sig</em></li>
       </ul>',
         [
           '@response_url' => '<wpdisplay item=' . C_WORLDPAY_BG_RESPONSE_URL_TOKEN
-            . '-ppe empty="' . $url . '">',
+            . '-ppe empty="' . $payment_url . '">',
           '@sig' => implode(':', static::md5signatureFields()),
+          '@link' => $this->linkGenerator->generate($this->t('Worldpay help document'), $help_url),
         ]
       ),
     ];
@@ -548,7 +563,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
     }
 
     $order = $this->entityTypeManager->getStorage('commerce_order')->load($request->request->get('MC_orderId'));
-
+    $build = [];
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'Y') {
       $payment = $this->createPayment($request->request->all(), $order);
       $payment->state = 'capture_completed';
@@ -561,7 +576,14 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID' => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new RedirectResponse($this->buildReturnUrl($order));
+
+      $build += [
+        '#theme' => 'commerce_worldpay_success',
+        '#transaction_id' => $request->request->get('transId'),
+        '#order_id' => $order->id(),
+        '#return_url' => $this->buildReturnUrl($order),
+        '#cache' => ['max-age' => 0],
+      ];
     }
 
     if ($order instanceof OrderInterface && $request->request->get('transStatus') === 'C') {
@@ -573,9 +595,25 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         '%transID'  => $request->request->get('transId'),
       ];
       $this->logger->log($logLevel, $logMessage, $logContext);
-      return new RedirectResponse($this->buildCancelUrl($order));
+
+      $build += [
+        '#theme' => 'commerce_worldpay_cancel',
+        '#transaction_id' => $request->request->get('transId'),
+        '#order_id' => $order->id(),
+        '#return_url' => $this->buildCancelUrl($order),
+        '#cache' => ['max-age' => 0],
+      ];
+
     }
-    return new Response('', Response::HTTP_BAD_REQUEST);
+
+    $output = \Drupal::service('renderer')->renderRoot($build);
+
+    $response = new Response();
+    $response->setStatusCode(200);
+    $response->setContent($output);
+    $response->headers->set('Content-Type', 'text/html');
+
+    return $response;
   }
 
   /**
@@ -592,7 +630,8 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       $container->get('request_stack'),
       $container->get('logger.channel.commerce_worldpay'),
       $container->get('datetime.time'),
-      $container->get('module_handler')
+      $container->get('module_handler'),
+      $container->get('link_generator')
     );
   }
 

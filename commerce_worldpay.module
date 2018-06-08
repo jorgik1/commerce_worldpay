@@ -20,3 +20,26 @@ define('C_WORLDPAY_BG_RESPONSE_URL_TOKEN', 'MC_callback');
  * @file
  * Provides a Worldpay Business Gateway payment method for Drupal Commerce.
  */
+
+
+/**
+ * Implements hook_theme().
+ */
+function commerce_worldpay_theme() {
+  $common_vars = [
+    'installation_id' => NULL,
+    'order_id' => NULL,
+    'transaction_id' => NULL,
+    'return_url' => NULL,
+  ];
+  return [
+    'commerce_worldpay_success' => [
+      'variables' => $common_vars,
+      'template' => 'commerce-worldpay-success',
+    ],
+    'commerce_worldpay_cancel' => [
+      'variables' => $common_vars,
+      'template' => 'commerce-worldpay-cancel',
+    ],
+  ];
+}
