@@ -198,7 +198,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
         <li><strong>Payment Response URL</strong> must be set to: <em>@response_url</em></li>
         <li><strong>Payment Response enabled?</strong> must be <em>enabled</em></li>
         <li><strong>Enable the Shopper Response</strong> should be <em>enabled</em> to get the Commerce response page.</li>
-        <li><strong>Shopper Redirect URL</strong> and set the value to be <em>MC_callback</em>. @link.</li>
+        <li><strong>Shopper Redirect URL</strong> and set the value to be <em>@shopper_link</em>. @link.</li>
         <li><strong>SignatureFields must be set to</strong>: <em>@sig</em></li>
       </ul>',
         [
@@ -206,6 +206,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
             . '-ppe empty="' . $payment_url . '">',
           '@sig' => implode(':', static::md5signatureFields()),
           '@link' => $this->linkGenerator->generate($this->t('Worldpay help document'), $help_url),
+          '@shopper_link' => '<wpdisplay item=MC_callback>'
         ]
       ),
     ];
