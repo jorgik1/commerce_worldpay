@@ -6,7 +6,7 @@ define('WORLDPAY_BG_SERVER_LIVE', 'Live');
 // Default URLs for WorldPay transaction.
 define(
   'C_WORLDPAY_BG_DEF_SERVER_LIVE',
-  'https://secure.wp3.rbsworldpay.com/wcc/purchase'
+  'https://secure.worldpay.com/wcc/purchase'
 );
 define(
   'C_WORLDPAY_BG_DEF_SERVER_TEST',

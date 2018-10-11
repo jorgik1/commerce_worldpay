@@ -503,11 +503,16 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
   /**
    * Create a Commerce Payment from a WorldPay form request successful result.
    *
-   * @throws \Drupal\Core\Entity\EntityStorageException
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @param array $responseData
+   *
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
    *
    * @return PaymentInterface $payment
    *    The commerce payment record.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function createPayment(array $responseData, OrderInterface $order) {
 
@@ -533,9 +538,12 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
 
   /**
    * {@inheritdoc}
-   * @throws \InvalidArgumentException
-   * @throws \Drupal\Core\Entity\EntityStorageException
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function onNotify(Request $request) {
     $content = $request->getMethod() === 'POST' ? $request->getContent() : FALSE;
