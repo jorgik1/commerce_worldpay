@@ -429,7 +429,7 @@ class WorldpayRedirect extends OffsitePaymentGatewayBase implements WorldpayRedi
       );
       return FALSE;
     }
-    if ($this->moduleHandler->moduleExists('commerce_shipping')) {
+    if ($this->moduleHandler->moduleExists('commerce_shipping') && $order->hasField('shipments')) {
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
       $shipments = $order->get('shipments')->referencedEntities();
 
